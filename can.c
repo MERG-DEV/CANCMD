@@ -133,7 +133,7 @@ void initCan(BYTE EEcanID) {
     // Set filter 0 for standard ID only to reject bootloader messages
     RXF0SIDL = 0x80;
 
-    // Link all filters to RXB0 - maybe only neccessary to link 1
+    // Link all filters to RXB0 - maybe only necessary to link 1
     RXFBCON0 = 0;
     RXFBCON1 = 0;
     RXFBCON2 = 0;
@@ -165,7 +165,7 @@ void initCan(BYTE EEcanID) {
     CANCON = 0;                	// Out of CAN setup mode
 
 
-    // Setup transmit buffers witrh can_id etc
+    // Setup transmit buffers with can_id etc
     initCanTxBuffers(EEcanID);
      // clear the fifo receive buffers
     clearCanRXBuffers();
@@ -182,7 +182,7 @@ void clearCanRXBuffers(void)
 }
 
 
-// Initilase the CAN transmit buffers, one for general use,
+// Initialise the CAN transmit buffers, one for general use,
 // one dedicated to transmit after TX error or overflow and one
 // dedicated to responding to RTR
 // These buffers are intialised at startup and whenever the can id is changed
@@ -208,8 +208,8 @@ void initCanTxBuffers(BYTE EEcanID)
 
     // Setup TXB2 with response to RTR frame
     TXB2SIDH = 0b10110000 | (can_ID & 0x78) >>3;
-    TXB0SIDL = (can_ID & 0x07) << 5;
-    TXB0DLC = 0;   // no data, RTR bit cleared
+    TXB2SIDL = (can_ID & 0x07) << 5;
+    TXB2DLC = 0;   // no data, RTR bit cleared
 }
 
 
@@ -273,18 +273,19 @@ BOOL isCanMsgReceived(void) {
 void checkIncomingCanID(void)
 
 {
-
+  // CANID conflict resolution will now be added with the migration to use CBUSLIB
 }
 
 void processRTR(void)
 {
-    rx_ptr->con = 0;    // Just retire buffer for now
+    TXB2CONbits.TXREQ = 1;  // Send response to RTR
+    rx_ptr->con = 0;    // retire buffer
 }
 
 void self_enumerate()
 
 {
-
+    // self enumeration will now be added with the migration to use CBUSLIB
 }
 
 
@@ -336,15 +337,15 @@ void sendTX1(void) {
 
 void serviceCanInterrupts(void)
 {
-    // If FIFO watermark interrupt is signalled then we copy the contents
-    // of the harddware fifo into the software fifo array. If the software fifo is full,
-    // nothing more we can do except let hardware fifo continue to fill up.
+    // Future plan is to implement additional software FIFO, so if watermark interrupt is signalled then we copy the contents
+    // of the hardware fifo into the software fifo array. This will now be done when CANCMD is migrated to use the same CBUSLIB libraries
+    // as CANMIO, because that has already been implemented and tested there.
 
     
     if (PIR3bits.FIFOWMIF == 1) {
-        TXB0CONbits.TXREQ = 1;
+      //  TXB0CONbits.TXREQ = 1;
       //  op_flags.bus_off = 1;
-        PIE3bits.FIFOWMIE = 0;
+        PIR3bits.FIFOWMIF = 0;
     }
     if (PIR3bits.ERRIF == 1) {
 		if (TXB1CONbits.TXLARB) {  // lost arbitration
