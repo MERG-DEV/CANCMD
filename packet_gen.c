@@ -216,19 +216,21 @@ void packet_gen(ModNVPtr NVPtr) {
 //
 
 // ??? Change so when re-using cached entries, count on through rather than keep re-using the same one.
+// Returns session number
 
-void queue_add(WORD addr, enum glocModes requestmode, ModNVPtr cmdNVPtr) {
+BYTE queue_add(WORD addr, enum glocModes requestmode, ModNVPtr cmdNVPtr) {
 
-    unsigned char i, free_handle, cached_handle, cache_reuse_handle, use_handle, err;
+    BYTE i, free_handle, cached_handle, cache_reuse_handle, use_handle, err;
 
     // Ignore attempts to use address 0
     if (addr == 0) {
-        return;
+        return(0xFF);
     }
     // Find free entry or match address
     free_handle = 0;
     cached_handle = 0;
     cache_reuse_handle = 0;
+    use_handle = 0xFF;  // set invalid session no. to start with
 
     i = 0;
     err = ERR_LOCO_STACK_FULL;
@@ -340,7 +342,7 @@ void queue_add(WORD addr, enum glocModes requestmode, ModNVPtr cmdNVPtr) {
         Tx1[d3] = err;
         sendCbusMsg();
     }
-
+    return( use_handle);
 } // queue add
 
 
@@ -1244,6 +1246,9 @@ void cbus_event(ecan_rx_buffer * rx_ptr, ModNVPtr cmdNVPtr)
     eventNum <<= 8;
     eventNum += rx_ptr->d4;
     
+    if (((rx_ptr->d0 == OPC_ASON) || (rx_ptr->d0 == OPC_ASOF))
+        eventNode = 0; // Flag node as zero for short events
+    
     // eventNum  = (rx_ptr->d3 << 8) + rx_ptr->d4;  // gets wrong answer compared to 3 lines above - probably issue with promoting byte operand to word
    
     // Mapped CBUS event to DCC accessory - note that CBUS events count from 1 whilst DCC accessory addresses count from zero, so use CBUS event - 1
@@ -1275,48 +1280,47 @@ void cbus_event(ecan_rx_buffer * rx_ptr, ModNVPtr cmdNVPtr)
 
     if (sh_poc_enabled) 
     {
-        switch (eventNode) 
-        {
-            case SH_BUT_NODE:
-                if ((eventNum == SH_HONK_EN) && (rx_ptr->d0 == OPC_ACON)) 
+        if (eventNode == SH_BUT_NODE)
+        {    
+            if ((eventNum == SH_HONK_EN) && (rx_ptr->d0 == OPC_ACON)) 
+            {
+                if ((session = getShuttleSession(0)) != 0xFF) {
+                    if ((honkTypeCount > 4) || (honkTypeCount < 3))
+                        honkTypeCount = 3;
+
+                    doHonk(session, honkTypeCount);
+
+                }
+            }
+
+            if ((session = getShuttleSession(shuttle_index = eventNum - SH_BUT_EN)) != 0xFF) 
+            {
+                if (rx_ptr->d0 == OPC_ACON) 
                 {
-                    if ((session = getShuttleSession(0)) != 0xFF) {
+                    activeShuttleTable[ shuttle_index ].flags.manual = TRUE;
+                    if ((q_queue[session].speed & 0x7F) == 0) 
+                    {
+                        speed_update(session, activeShuttleTable[ shuttle_index ].set_speed);
+
                         if ((honkTypeCount > 4) || (honkTypeCount < 3))
                             honkTypeCount = 3;
 
                         doHonk(session, honkTypeCount);
 
+                        honkTypeCount++;
                     }
                 }
 
-                if ((session = getShuttleSession(shuttle_index = eventNum - SH_BUT_EN)) != 0xFF) 
-                {
-                    if (rx_ptr->d0 == OPC_ACON) 
-                    {
-                        activeShuttleTable[ shuttle_index ].flags.manual = TRUE;
-                        if ((q_queue[session].speed & 0x7F) == 0) 
-                        {
-                            speed_update(session, activeShuttleTable[ shuttle_index ].set_speed);
-
-                            if ((honkTypeCount > 4) || (honkTypeCount < 3))
-                                honkTypeCount = 3;
-
-                            doHonk(session, honkTypeCount);
-
-                            honkTypeCount++;
-                        }
-                    }
-
-                    if ((rx_ptr->d0 == OPC_ACOF) && (q_queue[session].speed & 0x7F) != 0) {
-                        if (activeShuttleTable[ shuttle_index ].flags.manual) {
-                            activeShuttleTable[ shuttle_index ].set_speed = q_queue[session].speed;
-                            speed_update(session, activeShuttleTable[ shuttle_index ].set_speed & 0x80); // set speed to zero but leave direction intact
-                        }
+                if ((rx_ptr->d0 == OPC_ACOF) && (q_queue[session].speed & 0x7F) != 0) {
+                    if (activeShuttleTable[ shuttle_index ].flags.manual) {
+                        activeShuttleTable[ shuttle_index ].set_speed = q_queue[session].speed;
+                        speed_update(session, activeShuttleTable[ shuttle_index ].set_speed & 0x80); // set speed to zero but leave direction intact
                     }
                 }
-                break;
-
-            case SH_FWD_NODE:
+            }
+        }
+ 
+        if ???????
                 if (rx_ptr->d0 == OPC_ACON) 
                     reverseShuttleAtSensor( (eventNum - SH_FWD_EN), TRUE );
                 break;
@@ -1457,13 +1461,22 @@ void initShuttles(void)
 {
     int i;
     
- 	// Initialise active shuttle table
+ 	// Initialise active shuttle table and copy predefiend shuttles info from NVs into active shuttle table
 
 	for (i=0; i<MAX_HANDLES; i++)
 	{
-        activeShuttleTable[i].flags.byte = 0;
-	}
-
+        activeShuttleTable[i].counter = 0;
+        
+        if (!nodevartable.module_nodevars.shuttletable[i].flags.uninitialised)
+        {    
+            activeShuttleTable[i].flags.byte = activeShuttleTable[i].flags.byte;
+            activeShuttleTable[i].loco_addr = nodevartable.module_nodevars.shuttletable[i].loco_addr;
+            activeShuttleTable[i].set_speed = nodevartable.module_nodevars.shuttletable[i].default_speed;
+        }
+        else
+            activeShuttleTable[i].flags.byte = 0;
+ 	}
+  
     // Initialise delayed event table
 
     for (i=0; i<MAX_DELAYED_EVENTS; i++)
@@ -1479,5 +1492,24 @@ void initShuttles(void)
         Totis[i].activeDebounceCount = 0;
         Totis[i].inactiveDebounceCount = 0;
     }    
+    
+}
+
+void startShuttles(void)
+
+{
+    BYTE shuttleNum, session;
+    
+    // Start any predefined shuttles with the autostart flag set
+ 	for (shuttleNum=0; shuttleNum<MAX_HANDLES; shuttleNum++)
+    {
+        if (activeShuttleTable[shuttleNum].flags.valid && activeShuttleTable[shuttleNum].flags.autostart)
+        {
+            // Create a loco session for shuttle, will send a ploc if successful so we can see it did it on CBUS
+            if (session = queue_add(activeShuttleTable[shuttleNum].loco_addr.addr_int, glocNormal, (ModNVPtr) cmdNVptr) != 0xFF)
+                populate_shuttle(session, 0, FALSE);
+        }    
+    }    
+    
     
 }

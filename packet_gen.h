@@ -197,7 +197,7 @@ extern unsigned char s_tail;
 extern unsigned char s_cnt;
 
 void packet_gen( ModNVPtr NVPtr);
-void queue_add(WORD addr, enum glocModes requestmode, ModNVPtr cmdNVPtr );
+BYTE queue_add(WORD addr, enum glocModes requestmode, ModNVPtr cmdNVPtr );
 void send_ploc( BYTE handle );
 void force_release( BYTE handle, BOOL stolen );
 void throttle_mode(void);
@@ -227,8 +227,7 @@ BYTE getShuttleSession( BYTE shuttleIndex );
 void reverseShuttle( BYTE shuttleIndex );
 void doHonk(BYTE session, BYTE honkTypeCount);
 void initShuttles(void);
-
-
+void startShuttles(void);
 
 #define __PACKET_GEN_H
 #endif

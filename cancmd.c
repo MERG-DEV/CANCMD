@@ -243,6 +243,7 @@ void main(void) {
                     broadcast_stop();                   // Send stop all broadcast onto track (in case some decoders remember they were moving when power was removed)
                     send_stat();                        // send command station status message (after additional half sec to ensure cabs had time to reset)
                     sendStartOfDay( (ModEVPtr) NVPtr );     // If start of day event configured, send it now
+                    startShuttles;                      // Start any preconfigured shuttles
                 }
             }
 

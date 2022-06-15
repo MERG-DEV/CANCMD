@@ -93,22 +93,22 @@ BOOL parse_cbus_event(void);
 
 #define POC_MAX         2
 
-#else  // Test Board and any other test shuttle
+#else  // Other shuttles using a range of short events, base event number plus shuttle no. to define event to use
 
 #define SH_POC_EN_NODE  162             // Node 
 #define	SH_POC_ENABLE_EN 5              //   and event to enable shuttle
 
-#define SH_FWD_NODE     162             // Node
-#define SH_FWD_EN       2               //   and event for forward end reversing sensor
+#define SH_FWD_NODE     0               // Node
+#define SH_FWD_EN       47000           //   and event for forward end reversing sensor
 
-#define SH_REV_NODE     161             // Node
-#define SH_REV_EN       2               //   and event for reverse end reversing sensor
+#define SH_REV_NODE     0               // Node
+#define SH_REV_EN       48000           //   and event for reverse end reversing sensor
 
 #define SH_BUT_NODE     120             // Node for push buttons
 #define SH_BUT_EN       6               // Event base for shuttle buttons
 #define SH_HONK_EN      5               // Event for honk button
 
-#define POC_MAX         2               // Maximum shuttle no.
+#define POC_MAX         2               // Maximum "dispatch into" shuttle no.
 
 #define TOTI_DEBOUNCE   10              // Counts round main loop for train detector input debounce
 

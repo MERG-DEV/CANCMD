@@ -373,3 +373,80 @@ void serviceCanInterrupts(void)
 
     }
 }
+
+
+void clearFifo(void)
+
+{
+        
+  ecan_rx_buffer *ptr;
+  BYTE  hiIndex;
+  BYTE bufNum;
+
+
+  while (COMSTATbits.NOT_FIFOEMPTY)
+  {
+
+    bufNum = CANCON & 0x07;
+    ptr = (ecan_rx_buffer*) _PointBuffer(bufNum);
+    PIR3bits.RXBnIF = 0;
+    if (COMSTATbits.RXBnOVFL) {
+   //   maxcan++; // Buffer Overflow
+   //   led3timer = 5;
+   //   LED3 = LED_OFF;
+      COMSTATbits.RXBnOVFL = 0;
+    }
+
+    // Record and Clear any previous invalid message bit flag.
+    
+    if (PIR3bits.IRXIF) 
+      PIR3bits.IRXIF = 0;
+    
+    // Mark that this buffer is read and empty.
+    ptr->con &= 0x7f;
+ 
+  //  led1timer = 2;
+  //  LED1 = LED_ON;
+
+  }  // While hardware FIFO not empty
+  PIR3bits.FIFOWMIF = 0;
+} // canFillRxFifo
+
+
+    
+    
+// Set pointer to correct receive register set for incoming packet
+
+BYTE* _PointBuffer(BYTE b) {
+  BYTE* pt;
+
+  switch (b) {
+    case 0:
+      pt = (BYTE*) & RXB0CON;
+      break;
+    case 1:
+      pt = (BYTE*) & RXB1CON;
+      break;
+    case 2:
+      pt = (BYTE*) & B0CON;
+      break;
+    case 3:
+      pt = (BYTE*) & B1CON;
+      break;
+    case 4:
+      pt = (BYTE*) & B2CON;
+      break;
+    case 5:
+      pt = (BYTE*) & B3CON;
+      break;
+    case 6:
+      pt = (BYTE*) & B4CON;
+      break;
+    default:
+      pt = (BYTE*) & B5CON;
+      break;
+  }
+  return (pt);
+}
+    
+

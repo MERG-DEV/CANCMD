@@ -117,6 +117,8 @@ void checkIncomingCanID(void);
 void processRTR(void);
 void sendTX1(void);
 void serviceCanInterrupts(void);
+void clearFifo(void);
+BYTE* _PointBuffer(BYTE b);
 
 
 #endif	// __CAN_H
