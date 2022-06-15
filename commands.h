@@ -69,10 +69,6 @@ void parse_extended_cmd(void);
 BOOL parse_cbus_event(void);
 
 
-// Hard coded events for Command station management
-
-#define HC_CS_NODE      452
-#define HC_STOP_ALL     103
 
 // Temp hard coded stuff for shuttle proof of concept testing
 
@@ -98,11 +94,11 @@ BOOL parse_cbus_event(void);
 #define SH_POC_EN_NODE  162             // Node 
 #define	SH_POC_ENABLE_EN 5              //   and event to enable shuttle
 
-#define SH_FWD_NODE     0               // Node
-#define SH_FWD_EN       47000           //   and event for forward end reversing sensor
+#define SH_FWD_NODE     163             // Node
+#define SH_FWD_EN       1               //   and event for forward end reversing sensor base event number (shuttle 0)
 
-#define SH_REV_NODE     0               // Node
-#define SH_REV_EN       48000           //   and event for reverse end reversing sensor
+#define SH_REV_NODE     164             // Node
+#define SH_REV_EN       1               //   and event for reverse end reversing sensor base event number (shuttle 0)
 
 #define SH_BUT_NODE     120             // Node for push buttons
 #define SH_BUT_EN       6               // Event base for shuttle buttons

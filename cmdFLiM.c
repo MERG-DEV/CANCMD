@@ -64,10 +64,6 @@ const rom FCUParams     FCUparams   = { sizeof(ParamVals),(DWORD)&module_type,(W
 const rom char          module_type[] = MODULE_TYPE;
 
 
-// Event numbers for transmitted CBUS events
-
-#define AMPERAGE_EVENT  1
-
 // Node and event variables at a fixed place in ROM, starting on a segment boundary
 // so they can be written to as required 
 
@@ -137,7 +133,7 @@ void	cmdFlimInit(void)
 
     AmperageCountdown = cmdNVptr->sendcurrentinterval << 1; // Message interval in half second heartbeats
 
-    initShuttles();
+    initShuttles(cmdNVptr);
     
 } // cmdFlimInit
 
@@ -373,7 +369,7 @@ BOOL populate_shuttle( BYTE session, BYTE shuttle_id, BOOL ifempty )
 
     if (populate)
         set_shuttle_loco(session, shuttle_id);
-
+    
     return( populate );
 }
 

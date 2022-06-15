@@ -64,6 +64,19 @@
 
 #define MAX_DELAYED_EVENTS  32
 
+// Event numbers for transmitted CBUS events
+
+#define AMPERAGE_EVENT  1
+#define SHUTTLE_EVENT   10
+
+// Hard coded events for Command station management
+
+#define HC_CS_NODE      167
+#define HC_STOP_ALL     103     // On event only for stop all
+#define HC_PWR_CTL      104     //  On event for track power on, off event for track power off
+//
+
+
 #include "FLiM.h"
 
 typedef	union
@@ -103,8 +116,8 @@ typedef	union
         BOOL    directionSet:1;
         BOOL    fwdDirBit:1;
         BOOL    spare:1;
-        BOOL    uninitialised:1;   // Uninitialised shuttle entries have flag byte set to 0xFF
-    } ;
+        BOOL    initialised:1;   // Uninitialised shuttle entries have flag byte set to 0
+    } ;   
     BYTE	byte;
 } ShuttleFlags;
 

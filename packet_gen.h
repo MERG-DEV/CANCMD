@@ -226,8 +226,9 @@ void setShuttlesAuto( void );
 BYTE getShuttleSession( BYTE shuttleIndex );
 void reverseShuttle( BYTE shuttleIndex );
 void doHonk(BYTE session, BYTE honkTypeCount);
-void initShuttles(void);
+void initShuttles(ModNVPtr cmdNVPtr);
 void startShuttles(void);
+void sendShuttleStatus( BYTE shuttleEvent, BYTE i);
 
 #define __PACKET_GEN_H
 #endif

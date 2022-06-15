@@ -1234,7 +1234,7 @@ void checkToTiInputs()
 void cbus_event(ecan_rx_buffer * rx_ptr, ModNVPtr cmdNVPtr)
 {
     BYTE shuttle_index, session;
-    WORD eventNode, eventNum, i;
+    WORD eventNode, eventNum;
 
     eventNode  = rx_ptr->d1;
     eventNode <<= 8;
@@ -1246,7 +1246,7 @@ void cbus_event(ecan_rx_buffer * rx_ptr, ModNVPtr cmdNVPtr)
     eventNum <<= 8;
     eventNum += rx_ptr->d4;
     
-    if (((rx_ptr->d0 == OPC_ASON) || (rx_ptr->d0 == OPC_ASOF))
+    if ((rx_ptr->d0 == OPC_ASON) || (rx_ptr->d0 == OPC_ASOF))
         eventNode = 0; // Flag node as zero for short events
     
     // eventNum  = (rx_ptr->d3 << 8) + rx_ptr->d4;  // gets wrong answer compared to 3 lines above - probably issue with promoting byte operand to word
@@ -1264,9 +1264,19 @@ void cbus_event(ecan_rx_buffer * rx_ptr, ModNVPtr cmdNVPtr)
 
    // CS Management events
     
-    if ((eventNode == HC_CS_NODE) && (eventNum == HC_STOP_ALL) && (rx_ptr->d0 == OPC_ACON))
+    if (eventNode == HC_CS_NODE)
     {
-        stopAll();
+        switch (eventNum)
+        {
+            case HC_STOP_ALL:
+                if (rx_ptr->d0 == OPC_ACON)
+                    stopAll();
+                break;
+                        
+            case HC_PWR_CTL:
+                power_control(rx_ptr->d0 == OPC_ACON);
+                break;
+        }        
     }    
 
     
@@ -1320,19 +1330,15 @@ void cbus_event(ecan_rx_buffer * rx_ptr, ModNVPtr cmdNVPtr)
             }
         }
  
-        if ???????
-                if (rx_ptr->d0 == OPC_ACON) 
-                    reverseShuttleAtSensor( (eventNum - SH_FWD_EN), TRUE );
-                break;
-
-            case SH_REV_NODE:
-                if (rx_ptr->d0 == OPC_ACON) 
-                    reverseShuttleAtSensor( (eventNum - SH_REV_EN), FALSE );  
-                break;
-
-            default:
-                break; // ignore all other nodes
-        } // switch on node
+        if (((eventNode == SH_FWD_NODE) || (eventNode == SH_REV_NODE)) && ((rx_ptr->d0 == OPC_ACON) || (rx_ptr->d0 == OPC_ASON)))
+        {    
+            shuttle_index = (eventNode == SH_FWD_NODE ? SH_FWD_EN : SH_REV_EN );
+            
+            shuttle_index = eventNum - shuttle_index;
+            sendShuttleStatus(SHUTTLE_EVENT+3, shuttle_index);
+            reverseShuttleAtSensor( shuttle_index, (eventNode == SH_FWD_NODE) );
+            
+        } // if reversing sensor node number
     } //  if POC shuttles enabled
 } // cbus_event
 
@@ -1347,12 +1353,13 @@ void reverseShuttleAtSensor( BYTE shuttleIndex, BOOL fwdSensor )
     if ((session = getShuttleSession(shuttleIndex)) != 0xFF) 
     {
         setSpeed.velocity = activeShuttleTable[shuttleIndex].set_speed;
+        sendShuttleStatus(SHUTTLE_EVENT+4, shuttleIndex);
 
-        if (activeShuttleTable[shuttleIndex].flags.directionSet) 
-        {
-            if ((activeShuttleTable[shuttleIndex].flags.fwdDirBit && fwdSensor) == setSpeed.direction)
-                reverseShuttle(shuttleIndex);
-        } else
+//        if (activeShuttleTable[shuttleIndex].flags.directionSet) 
+//        {
+//            if ((activeShuttleTable[shuttleIndex].flags.fwdDirBit && fwdSensor) == setSpeed.direction)
+//                reverseShuttle(shuttleIndex);
+//        } else
         {
             activeShuttleTable[shuttleIndex].flags.fwdDirBit = (setSpeed.direction && fwdSensor);
             activeShuttleTable[shuttleIndex].flags.directionSet = TRUE;
@@ -1442,6 +1449,7 @@ void reverseShuttle(BYTE shuttleIndex)
         // loco_function( funcoff, session, 4 );		// Turn off sound functions
 
         speed_update(session, newSpeed);
+        sendShuttleStatus( SHUTTLE_EVENT+2, shuttleIndex);
     }
 } // reverseShuttle
 
@@ -1456,22 +1464,28 @@ void doHonk(BYTE session, BYTE honkTypeCount)    // honk or whistle
 }
 
 
-void initShuttles(void)
+void initShuttles(ModNVPtr cmdNVPtr)
 
 {
     int i;
     
- 	// Initialise active shuttle table and copy predefiend shuttles info from NVs into active shuttle table
+    sh_poc_enabled = cmdNVPtr->userflags.shuttles;
+    
+ 	// Initialise active shuttle table and copy predefined shuttles info from NVs into active shuttle table
 
 	for (i=0; i<MAX_HANDLES; i++)
 	{
         activeShuttleTable[i].counter = 0;
         
-        if (!nodevartable.module_nodevars.shuttletable[i].flags.uninitialised)
+        if (nodevartable.module_nodevars.shuttletable[i].flags.initialised && nodevartable.module_nodevars.shuttletable[i].flags.valid )
         {    
-            activeShuttleTable[i].flags.byte = activeShuttleTable[i].flags.byte;
-            activeShuttleTable[i].loco_addr = nodevartable.module_nodevars.shuttletable[i].loco_addr;
-            activeShuttleTable[i].set_speed = nodevartable.module_nodevars.shuttletable[i].default_speed;
+            activeShuttleTable[i].flags.byte = nodevartable.module_nodevars.shuttletable[i].flags.byte;
+            activeShuttleTable[i].loco_addr =  nodevartable.module_nodevars.shuttletable[i].loco_addr;
+            activeShuttleTable[i].set_speed =  nodevartable.module_nodevars.shuttletable[i].default_speed;
+            
+            
+            // Send status event for shuttle found
+            sendShuttleStatus( SHUTTLE_EVENT, i);
         }
         else
             activeShuttleTable[i].flags.byte = 0;
@@ -1505,11 +1519,27 @@ void startShuttles(void)
     {
         if (activeShuttleTable[shuttleNum].flags.valid && activeShuttleTable[shuttleNum].flags.autostart)
         {
+            // Send status event for shuttle found
+            sendShuttleStatus( SHUTTLE_EVENT+1, shuttleNum);
+            
             // Create a loco session for shuttle, will send a ploc if successful so we can see it did it on CBUS
             if (session = queue_add(activeShuttleTable[shuttleNum].loco_addr.addr_int, glocNormal, (ModNVPtr) cmdNVptr) != 0xFF)
-                populate_shuttle(session, 0, FALSE);
+                activeShuttleTable[ shuttleNum ].flags.started = TRUE;
+                speed_update(session, activeShuttleTable[ shuttleNum ].set_speed);
+               // populate_shuttle(session, 0, FALSE);
         }    
     }    
     
     
+}
+
+void sendShuttleStatus( BYTE shuttleEvent, BYTE i)
+{
+    Tx1[d0] = OPC_ACON3;
+    Tx1[d3] = 0;
+    Tx1[d4] = shuttleEvent;
+    Tx1[d5] = activeShuttleTable[i].set_speed;
+    Tx1[d6] = activeShuttleTable[i].loco_addr.addr_hi.byte;
+    Tx1[d7] = activeShuttleTable[i].loco_addr.addr_lo;
+    sendCbusMsgNN(Node_id);         
 }
