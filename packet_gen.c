@@ -1350,7 +1350,17 @@ void reverseShuttleAtSensor( BYTE shuttleIndex, BOOL fwdSensor )
     BYTE        session;
     DCCSpeed    setSpeed;
     
-    if ((session = getShuttleSession(shuttleIndex)) != 0xFF) 
+    session = getShuttleSession(shuttleIndex);
+    Tx1[d0] = OPC_ACON3;
+    Tx1[d3] = 0;
+    Tx1[d4] = SHUTTLE_EVENT+6;
+    Tx1[d5] = session;
+//    Tx1[d5] = activeShuttleTable[i].set_speed;
+    Tx1[d6] = activeShuttleTable[shuttleIndex].loco_addr.addr_hi.byte;
+    Tx1[d7] = activeShuttleTable[shuttleIndex].loco_addr.addr_lo;
+    sendCbusMsgNN(Node_id);        
+            
+    if ( session != 0xFF) 
     {
         setSpeed.velocity = activeShuttleTable[shuttleIndex].set_speed;
         sendShuttleStatus(SHUTTLE_EVENT+4, shuttleIndex);
@@ -1423,8 +1433,10 @@ BYTE getShuttleSession(BYTE shuttleIndex) // Return 0xFF if shuttle index or ses
  {
     BYTE session = 0xFF;
 
-    if ((shuttleIndex <= POC_MAX) && (activeShuttleTable[ shuttleIndex ].flags.valid == 1)) {
+    if ((shuttleIndex <= POC_MAX) && (activeShuttleTable[ shuttleIndex ].flags.valid)) {
         session = activeShuttleTable[ shuttleIndex ].session;
+        sendShuttleStatus(SHUTTLE_EVENT+7,shuttleIndex);        
+        
         if (q_queue[session].status.valid != 1)
             session = 0xFF;
     }
@@ -1443,7 +1455,7 @@ void reverseShuttle(BYTE shuttleIndex)
 
         if (!activeShuttleTable[ shuttleIndex ].flags.manual) {
             newSpeed &= 0x80; // In automatic mode, set speed to zero but with new direction whilst delay at each end of shuttle
-            addDelayedEvent(shuttleIndex, 40, eaStart ,0); // Set off again after a delay
+            addDelayedEvent(shuttleIndex, SH_PAUSE_TIME, eaStart ,0); // Set off again after a delay
         }
         // loco_function( funcoff, session, 3 );		// Turn off sound functions
         // loco_function( funcoff, session, 4 );		// Turn off sound functions
@@ -1524,10 +1536,14 @@ void startShuttles(void)
             
             // Create a loco session for shuttle, will send a ploc if successful so we can see it did it on CBUS
             if (session = queue_add(activeShuttleTable[shuttleNum].loco_addr.addr_int, glocNormal, (ModNVPtr) cmdNVptr) != 0xFF)
+            {    
+                q_queue[session].status.shuttle = 1;
+                activeShuttleTable[ shuttleNum ].session = session;
                 activeShuttleTable[ shuttleNum ].flags.started = TRUE;
                 speed_update(session, activeShuttleTable[ shuttleNum ].set_speed);
+            }   
                // populate_shuttle(session, 0, FALSE);
-        }    
+        }  
     }    
     
     
@@ -1538,7 +1554,8 @@ void sendShuttleStatus( BYTE shuttleEvent, BYTE i)
     Tx1[d0] = OPC_ACON3;
     Tx1[d3] = 0;
     Tx1[d4] = shuttleEvent;
-    Tx1[d5] = activeShuttleTable[i].set_speed;
+    Tx1[d5] = i;
+//    Tx1[d5] = activeShuttleTable[i].set_speed;
     Tx1[d6] = activeShuttleTable[i].loco_addr.addr_hi.byte;
     Tx1[d7] = activeShuttleTable[i].loco_addr.addr_lo;
     sendCbusMsgNN(Node_id);         

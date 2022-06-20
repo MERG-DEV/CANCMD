@@ -95,16 +95,17 @@ BOOL parse_cbus_event(void);
 #define	SH_POC_ENABLE_EN 5              //   and event to enable shuttle
 
 #define SH_FWD_NODE     163             // Node
-#define SH_FWD_EN       1               //   and event for forward end reversing sensor base event number (shuttle 0)
+#define SH_FWD_EN       12               //   and event for forward end reversing sensor base event number (shuttle 0)
 
 #define SH_REV_NODE     164             // Node
-#define SH_REV_EN       1               //   and event for reverse end reversing sensor base event number (shuttle 0)
+#define SH_REV_EN       12              //   and event for reverse end reversing sensor base event number (shuttle 0)
 
+#define SH_PAUSE_TIME   50              // Delayed event count for shuttle pause at each end
 #define SH_BUT_NODE     120             // Node for push buttons
 #define SH_BUT_EN       6               // Event base for shuttle buttons
 #define SH_HONK_EN      5               // Event for honk button
 
-#define POC_MAX         2               // Maximum "dispatch into" shuttle no.
+#define POC_MAX         6              // Maximum "dispatch into" shuttle no.
 
 #define TOTI_DEBOUNCE   10              // Counts round main loop for train detector input debounce
 
