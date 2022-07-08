@@ -218,6 +218,8 @@ void broadcast_stop(void);
 void consist_add(void);
 void consist_remove(void);
 void ops_write(dcc_address ops_address, WORD cv_num, BYTE cv_data, BYTE write_mode );
+void dccAccessoryWrite(WORD acc_num, BOOL accOn);
+BOOL dccAccessoryRoute(WORD event_num, BOOL accOn);
 void checkToTiInputs();
 void cbus_event(ecan_rx_buffer * rx_ptr, ModNVPtr cmdNVptr);
 void reverseShuttleAtSensor( BYTE shuttleIndex, BOOL fwdSensor );

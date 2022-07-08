@@ -971,6 +971,32 @@ void dccAccessoryWrite(WORD acc_num, BOOL accOn) {
     }
 }
 
+BOOL dccAccessoryRoute(WORD event_num, BOOL accOn)
+{
+    AccRoutePtr        routePtr;
+    BOOL               routeFound = FALSE;
+    BYTE               acc;
+            
+    
+    if (accOn)  // Route only responds to ON event
+    {
+        routePtr = cmdNVptr->accRouteTable[0];
+        
+        while (!(routeFound = (routePtr->mappedEvent != 0))) 
+        {    
+            
+            if (routeFound)
+            {    
+                for (acc = 0; acc < routePtr->accessoryCount; acc++)
+                {
+                    
+                }    
+            }
+        }    
+    }    
+}
+    
+
 void send_s(CancmdDbugFlags debugflags) {
     unsigned char i;
 
@@ -1258,7 +1284,8 @@ void cbus_event(ecan_rx_buffer * rx_ptr, ModNVPtr cmdNVPtr)
         ||  ((rx_ptr->d0 == OPC_ACON) || (rx_ptr->d0 == OPC_ACOF)) && (cmdNVPtr->mappednode == eventNode)) // Long event     
         {
             // Send a DCC accessory packet corresponding to the CBUS event received
-            dccAccessoryWrite(eventNum-1, (rx_ptr->d0 == OPC_ACON) || (rx_ptr->d0 == OPC_ASON));
+            if (!dccAccessoryRoute(eventNum, (rx_ptr->d0 == OPC_ACON) || (rx_ptr->d0 == OPC_ASON)))
+                dccAccessoryWrite(eventNum-1, (rx_ptr->d0 == OPC_ACON) || (rx_ptr->d0 == OPC_ASON));
         }
     }
 
