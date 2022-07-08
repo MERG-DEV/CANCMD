@@ -71,7 +71,7 @@ typedef union {
 		unsigned throttle_mode:2;   // Number of speed steps - see STMOD in cbusdefs
 		unsigned valid:1;
 	} ;
-	unsigned char byte;
+	BYTE byte;
 } q_slot_status;
 
 
@@ -228,6 +228,7 @@ void reverseShuttle( BYTE shuttleIndex );
 void doHonk(BYTE session, BYTE honkTypeCount);
 void initShuttles(ModNVPtr cmdNVPtr);
 void startShuttles(void);
+void stopShuttles(void);
 void sendShuttleStatus( BYTE shuttleEvent, BYTE i);
 
 #define __PACKET_GEN_H

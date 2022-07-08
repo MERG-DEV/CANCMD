@@ -44,15 +44,16 @@
 	
  For version number and revision history see CANCMD.c
  
-*/ 
+*/
+
+#include "project.h"
+#include "commands.h"
+#include "packet_gen.h"
+
 
 //
 // 27/6/11  Pete Brownlow - Heartbeat is now half second, counts adjusted so slot timeout unchanged
 // 02/01/12 Pete Brownlow - ops-write modified to take parameters, to support WCVOA
-
-
-#include "project.h"
-
 
 #pragma udata Q_QUEUE
 // Linker script puts this in GPR1
@@ -1282,11 +1283,24 @@ void cbus_event(ecan_rx_buffer * rx_ptr, ModNVPtr cmdNVPtr)
     
    // Proof of concept shuttle 
 
-    if ((eventNode == SH_POC_EN_NODE) && (eventNum == SH_POC_ENABLE_EN)) 
-    {
-        sh_poc_enabled = (cmdNVPtr->userflags.shuttles && (rx_ptr->d0 == OPC_ACON)); // Check if shuttles enabled (by switch and NV flag)
-        setShuttlesAuto();
-    }
+    if (eventNode == SH_POC_CTL_NODE)
+    {        
+        switch (eventNum)
+        {
+            case SH_POC_ENABLE_EN:
+                sh_poc_enabled = (cmdNVPtr->userflags.shuttles && (rx_ptr->d0 == OPC_ACON)); // Check if shuttles enabled (by switch and NV flag)
+                setShuttlesAuto();
+                break;
+                        
+            case SH_POC_START_EN:
+                startShuttles();
+                break;
+                
+            case SH_POC_STOP_EN:
+                stopShuttles();
+                break;
+        }        
+    }            
 
     if (sh_poc_enabled) 
     {
@@ -1488,13 +1502,13 @@ void initShuttles(ModNVPtr cmdNVPtr)
 	for (i=0; i<MAX_HANDLES; i++)
 	{
         activeShuttleTable[i].counter = 0;
-        
+        activeShuttleTable[i].session = 0xFF; 
+
         if (nodevartable.module_nodevars.shuttletable[i].flags.initialised && nodevartable.module_nodevars.shuttletable[i].flags.valid )
         {    
             activeShuttleTable[i].flags.byte = nodevartable.module_nodevars.shuttletable[i].flags.byte;
             activeShuttleTable[i].loco_addr =  nodevartable.module_nodevars.shuttletable[i].loco_addr;
             activeShuttleTable[i].set_speed =  nodevartable.module_nodevars.shuttletable[i].default_speed;
-            
             
             // Send status event for shuttle found
             sendShuttleStatus( SHUTTLE_EVENT, i);
@@ -1526,25 +1540,54 @@ void startShuttles(void)
 {
     BYTE shuttleNum, session;
     
-    // Start any predefined shuttles with the autostart flag set
- 	for (shuttleNum=0; shuttleNum<MAX_HANDLES; shuttleNum++)
+    if (sh_poc_enabled)
+    {    
+        // Start or restart any predefined shuttles with the autostart flag set
+        for (shuttleNum=0; shuttleNum<MAX_HANDLES; shuttleNum++)
+        {
+            if (activeShuttleTable[shuttleNum].flags.valid && activeShuttleTable[shuttleNum].flags.autostart)
+            {
+                // Send status event for shuttle found
+                sendShuttleStatus( SHUTTLE_EVENT+1, shuttleNum);
+
+                // Create a loco session for shuttle if it doesn't already exist, will send a ploc if successful so we can see it did it on CBUS
+                if ((session = activeShuttleTable[ shuttleNum ].session ) == 0xFF)
+                {    
+                    session = queue_add(activeShuttleTable[shuttleNum].loco_addr.addr_int, glocNormal, (ModNVPtr) cmdNVptr); 
+                    activeShuttleTable[ shuttleNum ].session = session;
+                    activeShuttleTable[ shuttleNum ].flags.started = TRUE;
+                    q_queue[session].status.shuttle = 1;
+                }    
+
+                // Set shuttle going at speed stored in shuttle table    
+                if (session != 0xFF)    
+                    speed_update(session, activeShuttleTable[ shuttleNum ].set_speed);
+            }  
+        } 
+    }
+}    
+
+    
+void stopShuttles(void)
+
+{
+    BYTE shuttleNum, session;
+ 
+    // Stop all running shuttles 
+    for (shuttleNum=0; shuttleNum<MAX_HANDLES; shuttleNum++)
     {
-        if (activeShuttleTable[shuttleNum].flags.valid && activeShuttleTable[shuttleNum].flags.autostart)
+        if (activeShuttleTable[shuttleNum].flags.valid)
         {
             // Send status event for shuttle found
             sendShuttleStatus( SHUTTLE_EVENT+1, shuttleNum);
-            
-            // Create a loco session for shuttle, will send a ploc if successful so we can see it did it on CBUS
-            if (session = queue_add(activeShuttleTable[shuttleNum].loco_addr.addr_int, glocNormal, (ModNVPtr) cmdNVptr) != 0xFF)
-            {    
-                q_queue[session].status.shuttle = 1;
-                activeShuttleTable[ shuttleNum ].session = session;
-                activeShuttleTable[ shuttleNum ].flags.started = TRUE;
-                speed_update(session, activeShuttleTable[ shuttleNum ].set_speed);
-            }   
-               // populate_shuttle(session, 0, FALSE);
+
+            // Save current speed and set speed to zero
+            session = activeShuttleTable[ shuttleNum ].session;
+            activeShuttleTable[ shuttleNum ].set_speed = q_queue[session].speed;
+            speed_update(session, 0);
         }  
-    }    
+
+    }
     
     
 }

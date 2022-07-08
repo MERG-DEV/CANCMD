@@ -91,8 +91,12 @@ BOOL parse_cbus_event(void);
 
 #else  // Other shuttles using a range of short events, base event number plus shuttle no. to define event to use
 
-#define SH_POC_EN_NODE  162             // Node 
-#define	SH_POC_ENABLE_EN 5              //   and event to enable shuttle
+#define SH_POC_CTL_NODE 162             // Shuttle Control Node 
+#define	SH_POC_ENABLE_EN 5              //   event to enable shuttles
+#define	SH_POC_START_EN 6              //   event to start shuttles
+#define	SH_POC_STOP_EN 7              //   event to stop shuttles
+
+
 
 #define SH_FWD_NODE     163             // Node
 #define SH_FWD_EN       12               //   and event for forward end reversing sensor base event number (shuttle 0)
