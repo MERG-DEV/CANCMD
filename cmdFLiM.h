@@ -146,6 +146,31 @@ typedef struct
     BYTE inactiveDebounceCount;
 } TOTIEntry;
 
+//***************************************************************************************
+// Data structures for DCC accessory route table.  This allows a single CBUS event to be mapped to a number of DCC accessories to make a route.
+// If a CBUS event is in this table, the route overides the usual mapping to DCC accessory addresses
+//***************************************************************************************
+
+
+typedef BYTE AccessoryAddress[];
+
+
+typedef struct
+{
+   AccessoryAddress : accAdress;
+   BYTE             :accON;
+} AccessoryEntry;
+
+typedef AccessoryEntry
+
+typedef struct 
+{
+    WORD    mappedEvent;
+    BYTE    accessoryCount;
+    AccessoryAddress accessories;
+} AccessoryRoute;
+
+typedef rom AccessoryRoute *AccRoutePtr;   
 
 // Data structures for Node Variables
 
@@ -213,6 +238,7 @@ typedef	struct
     BYTE        honkInterval;    // How often honk/whistle sounds in POC shuttle
     BYTE		maxSpeed;         // Maximum speed regardless of commands from cab (kids mode!)
     ShuttleEntry	shuttletable[MAX_HANDLES];
+    AccessoryRoute  accRouteTable[];
 } ModuleNodeDefs;		
 
 typedef union
