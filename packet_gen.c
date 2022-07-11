@@ -981,7 +981,7 @@ BOOL dccAccessoryRoute(WORD event_num, BOOL accOn)
     
     if (accOn)  // Route only responds to ON event
     {
-        routePtr = cmdNVptr->accRouteTable[0];
+        routePtr = cmdNVptr->accRouteTable;
         
         while (!(routeFound = (routePtr->mappedEvent != 0))) 
         {    

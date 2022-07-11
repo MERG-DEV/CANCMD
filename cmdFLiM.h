@@ -75,7 +75,7 @@
 #define HC_STOP_ALL     103     // On event only for stop all
 #define HC_PWR_CTL      104     //  On event for track power on, off event for track power off
 //
-
+#define DCC_ACC_ROUTE_SIZE  8
 
 #include "FLiM.h"
 
@@ -148,26 +148,26 @@ typedef struct
 
 //***************************************************************************************
 // Data structures for DCC accessory route table.  This allows a single CBUS event to be mapped to a number of DCC accessories to make a route.
-// If a CBUS event is in this table, the route overides the usual mapping to DCC accessory addresses
+// If a CBUS event is in this table, the route overrides the usual mapping to DCC accessory addresses
 //***************************************************************************************
 
 
-typedef BYTE AccessoryAddress[];
+// typedef BYTE AccessoryAddress[DCC_ACC_ROUTE_SIZE];
 
 
 typedef struct
 {
-   AccessoryAddress : accAdress;
-   BYTE             :accON;
+   BYTE             accAddr;
+   BOOL             accON;
 } AccessoryEntry;
 
-typedef AccessoryEntry
+// typedef AccessoryEntry
 
 typedef struct 
 {
     WORD    mappedEvent;
     BYTE    accessoryCount;
-    AccessoryAddress accessories;
+    BYTE    accessories;
 } AccessoryRoute;
 
 typedef rom AccessoryRoute *AccRoutePtr;   
