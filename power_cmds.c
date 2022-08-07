@@ -77,6 +77,7 @@ void stopAll( void )
 {
     em_stop();              // Set all sessions to emergency stop and send DCC stop broadcast
     sendCbusOpc(OPC_ESTOP); // Send track stopped CBU in response
+    CSStatus.EMStopAllActive = TRUE;
     if ( cmdNVptr->opflags.trkoffwithstopall)
         power_control( FALSE );
 }

@@ -76,7 +76,7 @@
 // CANCMD specific definitions
 
 #define MAX_HANDLES 32
-
+#define MAX_SHUTTLES 15
 
 //
 // Flags register used for DCC packet transmission
@@ -181,7 +181,5 @@ extern near BYTE        dcc_buff_m[7];
 
 extern ModeWord         mode_word;
 extern BYTE             tmr0_reload;
-
-
 
 #endif	// __CANCMD_H
