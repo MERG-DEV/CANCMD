@@ -82,7 +82,7 @@ const rom BYTE topofFLiM = 99;
 
 #pragma udata SHUTTLES
 
-ActiveShuttleEntry	activeShuttleTable[ MAX_HANDLES ];
+ActiveShuttleEntry	activeShuttleTable[ MAX_SHUTTLES ];
 
 #pragma udata DELEVT
 
@@ -98,7 +98,7 @@ BYTE	FLiMHoldCount;			// Flim hold timer
 BOOL	FLiMFlash;			// LED is flashing
 BOOL	FlashStatus;			// Control flash on/off of LED during FLiM setup
 BYTE    AmperageCountdown;              // Countdown to next amperage message
-
+StatFlags CSStatus;                 // Status flags
 
 #pragma udata 
 
@@ -301,13 +301,17 @@ void amperage_messages(void)
 void send_stat( void )
 
 {
+    CSStatus.serviceModeOn = op_flags.op_pwr_s;
+    CSStatus.trackOn = op_flags.op_pwr_m;  
+
     Tx1[d0] = OPC_STAT;
     Tx1[d3] = cmdNVptr->csnum;
-    Tx1[d4] = 0;  // ??? put in cs flags as per opcode
+    Tx1[d4] = CSStatus.byte;  // ??? put in cs flags as per opcode
     Tx1[d5] = MAJOR_VER;
     Tx1[d6] = MINOR_VER;
     Tx1[d7] = BETA;
     sendCbusMsgNN( Node_id );
+ 
 }
 
 // Sets a particular loco into a shuttle table entry
@@ -319,7 +323,7 @@ void set_shuttle_loco( BYTE session, BYTE shuttle_id )
 {
     BYTE prev_shuttle_session;
 
-    if ((shuttle_id < MAX_HANDLES) && (q_queue[session].status.valid == 1))
+    if ((shuttle_id < MAX_SHUTTLES) && (q_queue[session].status.valid == 1))
     {
 
         // Release any other loco in this shuttle
@@ -381,9 +385,9 @@ BYTE find_shuttle_session( BYTE session )
 {
     BYTE    shuttle_index;
 
-    for ( shuttle_index = 0; (shuttle_index < MAX_HANDLES) && (activeShuttleTable[ shuttle_index ].session != session); shuttle_index++ );
+    for ( shuttle_index = 0; (shuttle_index < MAX_SHUTTLES) && (activeShuttleTable[ shuttle_index ].session != session); shuttle_index++ );
 
-    if ( shuttle_index == MAX_HANDLES )
+    if ( shuttle_index == MAX_SHUTTLES )
         shuttle_index = 0xFF;
 
     return( shuttle_index );

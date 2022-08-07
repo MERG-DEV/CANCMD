@@ -498,11 +498,14 @@ BYTE set_funcop(BYTE *funcbyte, enum funcops dofunc, BYTE funcvalues) {
 void speed_update(BYTE session, BYTE speed)
  {
     // Only update for valid slots
-    if (q_queue[session].status.valid == 1) {
+    if (q_queue[session].status.valid == 1) 
+    {
         if ((speed & 0x7F) > cmdNVptr->maxSpeed)
             speed = (speed & 0x80) + cmdNVptr->maxSpeed;
         q_queue[session].speed = speed;
         queue_update(session, 0, 0);
+        if ((speed & 0x7F) > 0)
+            CSStatus.EMStopAllActive = FALSE;
     } else {
         force_release(session, FALSE);
     }
@@ -974,26 +977,31 @@ void dccAccessoryWrite(WORD acc_num, BOOL accOn) {
 BOOL dccAccessoryRoute(WORD event_num, BOOL accOn)
 {
     AccRoutePtr        routePtr;
+    BYTE               routeCounter;
     BOOL               routeFound = FALSE;
     BYTE               acc;
             
     
     if (accOn)  // Route only responds to ON event
     {
-        routePtr = cmdNVptr->accRouteTable[0];
+        routePtr = cmdNVptr->accRouteTable;
+        routeCounter = 0;
         
-        while (!(routeFound = (routePtr->mappedEvent != 0))) 
+        while ((routeCounter < MAX_ROUTES) &&  !(routeFound = (routePtr->mappedEvent == event_num))) 
         {    
-            
             if (routeFound)
             {    
-                for (acc = 0; acc < routePtr->accessoryCount; acc++)
+                for (acc = 0; acc < ACCS_PER_ROUTE; acc++)
                 {
-                    
+                    if (routePtr->accessories[acc].accFlags.inUse)
+                        dccAccessoryWrite(routePtr->accessories[acc].accAdress, routePtr->accessories[acc].accFlags.accON);
                 }    
             }
+            routeCounter++;
+            routePtr++;
         }    
-    }    
+    }  
+    return(routeFound);
 }
     
 
@@ -1283,7 +1291,7 @@ void cbus_event(ecan_rx_buffer * rx_ptr, ModNVPtr cmdNVPtr)
         if (((rx_ptr->d0 == OPC_ASON) || (rx_ptr->d0 == OPC_ASOF)) && (cmdNVPtr->mappednode == 0) // Short event
         ||  ((rx_ptr->d0 == OPC_ACON) || (rx_ptr->d0 == OPC_ACOF)) && (cmdNVPtr->mappednode == eventNode)) // Long event     
         {
-            // Send a DCC accessory packet corresponding to the CBUS event received
+            // Send a DCC accessory packet corresponding to the CBUS event received, or a route of packets if found
             if (!dccAccessoryRoute(eventNum, (rx_ptr->d0 == OPC_ACON) || (rx_ptr->d0 == OPC_ASON)))
                 dccAccessoryWrite(eventNum-1, (rx_ptr->d0 == OPC_ACON) || (rx_ptr->d0 == OPC_ASON));
         }
@@ -1450,7 +1458,7 @@ void setShuttlesAuto(void)
  {
     BYTE i;
 
-    for (i = 0; i < MAX_HANDLES; i++) {
+    for (i = 0; i < MAX_SHUTTLES; i++) {
         if (activeShuttleTable[i].flags.valid)
             activeShuttleTable[i].flags.manual = FALSE;
     }
@@ -1512,7 +1520,7 @@ void initShuttles(ModNVPtr cmdNVPtr)
     
  	// Initialise active shuttle table and copy predefined shuttles info from NVs into active shuttle table
 
-	for (i=0; i<MAX_HANDLES; i++)
+	for (i=0; i<MAX_SHUTTLES; i++)
 	{
         activeShuttleTable[i].counter = 0;
         
@@ -1554,25 +1562,28 @@ void startShuttles(void)
     BYTE shuttleNum, session;
     
     // Start any predefined shuttles with the autostart flag set
- 	for (shuttleNum=0; shuttleNum<MAX_HANDLES; shuttleNum++)
-    {
-        if (activeShuttleTable[shuttleNum].flags.valid && activeShuttleTable[shuttleNum].flags.autostart)
-        {
-            // Send status event for shuttle found
-            sendShuttleStatus( SHUTTLE_EVENT+1, shuttleNum);
-            
-            // Create a loco session for shuttle, will send a ploc if successful so we can see it did it on CBUS
-            if (session = queue_add(activeShuttleTable[shuttleNum].loco_addr.addr_int, glocNormal, (ModNVPtr) cmdNVptr) != 0xFF)
-            {    
-                q_queue[session].status.shuttle = 1;
-                activeShuttleTable[ shuttleNum ].session = session;
-                activeShuttleTable[ shuttleNum ].flags.started = TRUE;
-                speed_update(session, activeShuttleTable[ shuttleNum ].set_speed);
-            }   
-               // populate_shuttle(session, 0, FALSE);
-        }  
-    }    
     
+    if (sh_poc_enabled)
+    {    
+        for (shuttleNum=0; shuttleNum<MAX_SHUTTLES; shuttleNum++)
+        {
+            if (activeShuttleTable[shuttleNum].flags.valid && activeShuttleTable[shuttleNum].flags.autostart)
+            {
+                // Send status event for shuttle found
+                sendShuttleStatus( SHUTTLE_EVENT+1, shuttleNum);
+
+                // Create a loco session for shuttle, will send a ploc if successful so we can see it did it on CBUS
+                if (session = queue_add(activeShuttleTable[shuttleNum].loco_addr.addr_int, glocNormal, (ModNVPtr) cmdNVptr) != 0xFF)
+                {    
+                    q_queue[session].status.shuttle = 1;
+                    activeShuttleTable[ shuttleNum ].session = session;
+                    activeShuttleTable[ shuttleNum ].flags.started = TRUE;
+                    speed_update(session, activeShuttleTable[ shuttleNum ].set_speed);
+                }   
+                   // populate_shuttle(session, 0, FALSE);
+            }  
+        }    
+    }
     
 }
 

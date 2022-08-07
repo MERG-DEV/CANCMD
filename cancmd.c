@@ -241,9 +241,12 @@ void main(void) {
                 if (startupTimer == 0)
                 {
                     broadcast_stop();                   // Send stop all broadcast onto track (in case some decoders remember they were moving when power was removed)
-                    send_stat();                        // send command station status message (after additional half sec to ensure cabs had time to reset)
+                    CSStatus.EMStopAllActive = TRUE;
+                    CSStatus.busOn = TRUE;
+                    send_stat();                             // send command station status message (after additional half sec to ensure cabs had time to reset)
                     sendStartOfDay( (ModEVPtr) NVPtr );     // If start of day event configured, send it now
                     startShuttles();
+                    CSStatus.resetDone = FALSE;
                 }    
             }
 
@@ -301,6 +304,10 @@ void main(void) {
 void setup(void) {
     unsigned char i;
 
+    // INitialise CS Status bits
+    CSStatus.byte = 0;  // All flags false
+    CSStatus.resetDone = TRUE;
+        
     INTCON = 0;
     EECON1 = 0;
 

@@ -53,7 +53,7 @@
 */ 
 
 
-#define NV_NUM		sizeof(ModuleNodeDefs)  // 16+(4*MAX_HANDLES)	// Number of node variables
+#define NV_NUM		sizeof(ModuleNodeDefs)  // 16+(4*MAX_SHUTTLES)+ROUTE TABLE 	// Number of node variables
 #define MAX_EVT		255                     // Number of events
 #define EVperEVT	sizeof(SHTEvent)        // Event variables per event
 
@@ -63,6 +63,12 @@
 #define DEFAULT_NN 	0xFFFE
 
 #define MAX_DELAYED_EVENTS  32
+
+// Definitions for DCC accessory routes
+
+#define MAX_ROUTES 10
+#define ACCS_PER_ROUTE 8
+
 
 // Event numbers for transmitted CBUS events
 
@@ -78,6 +84,12 @@
 
 
 #include "FLiM.h"
+#include "cancmd.h"
+
+
+//
+// Command station status flags
+//
 
 typedef	union
 {
@@ -94,7 +106,6 @@ typedef	union
     } ;
     BYTE	byte;
 } StatFlags;
-
 
 //***************************************************************************************
 // Data structures for Node variables table including shuttles
@@ -151,23 +162,24 @@ typedef struct
 // If a CBUS event is in this table, the route overides the usual mapping to DCC accessory addresses
 //***************************************************************************************
 
-
-typedef BYTE AccessoryAddress[];
-
+typedef struct
+{    
+    unsigned inUse:1;
+    unsigned accON:1;
+} AccFlags; 
 
 typedef struct
 {
-   AccessoryAddress : accAdress;
-   BYTE             :accON;
+   BYTE             accAdress;
+   AccFlags         accFlags;
 } AccessoryEntry;
 
-typedef AccessoryEntry
+typedef AccessoryEntry Accessories[ACCS_PER_ROUTE];
 
 typedef struct 
 {
     WORD    mappedEvent;
-    BYTE    accessoryCount;
-    AccessoryAddress accessories;
+    Accessories accessories;
 } AccessoryRoute;
 
 typedef rom AccessoryRoute *AccRoutePtr;   
@@ -237,8 +249,8 @@ typedef	struct
     BYTE		sodDelay;		// Delay before sending start of day event (after initial startup delay)
     BYTE        honkInterval;    // How often honk/whistle sounds in POC shuttle
     BYTE		maxSpeed;         // Maximum speed regardless of commands from cab (kids mode!)
-    ShuttleEntry	shuttletable[MAX_HANDLES];
-    AccessoryRoute  accRouteTable[];
+    ShuttleEntry	shuttletable[MAX_SHUTTLES];
+    AccessoryRoute  accRouteTable[MAX_ROUTES];
 } ModuleNodeDefs;		
 
 typedef union
@@ -372,9 +384,10 @@ extern const rom NodevarTable	nodevartable;
 extern const rom BYTE topofFLiM;
 
 // extern const rom CMDEventEntry	eventtable[MAX_EVT];  // events will be supported in version 5
-extern           ModNVPtr       cmdNVptr;                // Pointer to node variables structure
+extern ModNVPtr             cmdNVptr;                // Pointer to node variables structure
+extern StatFlags            CSStatus; 
 
-extern ActiveShuttleEntry	activeShuttleTable[ MAX_HANDLES ];
+extern ActiveShuttleEntry	activeShuttleTable[ MAX_SHUTTLES ];
 extern DelayListEntry       delayedEvents[ MAX_DELAYED_EVENTS ];
 
 

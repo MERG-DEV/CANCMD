@@ -11,8 +11,8 @@ CODEPAGE   NAME=bootloader START=0x0               END=0x7FF        PROTECTED
 CODEPAGE   NAME=vectors    START=0x800             END=0x81F        PROTECTED
 CODEPAGE   NAME=parameters START=0x820             END=0x84F        PROTECTED
 CODEPAGE   NAME=module_vars START=0x850            END=0x86F        PROTECTED
-CODEPAGE   NAME=page       START=0x870             END=0x6FFF
-CODEPAGE   NAME=flimdata   START=0x7000            END=0x7FFF
+CODEPAGE   NAME=page       START=0x870             END=0x5FFF
+CODEPAGE   NAME=flimdata   START=0x6000            END=0x7FFF
 CODEPAGE   NAME=idlocs     START=0x200000          END=0x200007       PROTECTED
 CODEPAGE   NAME=config     START=0x300000          END=0x30000D       PROTECTED
 CODEPAGE   NAME=devid      START=0x3FFFFE          END=0x3FFFFF       PROTECTED
