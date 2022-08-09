@@ -75,11 +75,12 @@
 #define AMPERAGE_EVENT  1
 #define SHUTTLE_EVENT   10
 
-// Hard coded events for Command station management
+// Hard coded events for Command station management (will be teachable in later version using CBUSLIB)
 
 #define HC_CS_NODE      167
 #define HC_STOP_ALL     103     // On event only for stop all
-#define HC_PWR_CTL      104     //  On event for track power on, off event for track power off
+#define HC_PWR_CTL      104     // On event for track power on, off event for track power off
+#define HC_RESET        105     // On event resets CS
 //
 #define DCC_ACC_ROUTE_SIZE  8
 

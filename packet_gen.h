@@ -229,7 +229,7 @@ BYTE getShuttleSession( BYTE shuttleIndex );
 void reverseShuttle( BYTE shuttleIndex );
 void doHonk(BYTE session, BYTE honkTypeCount);
 void initShuttles(ModNVPtr cmdNVPtr);
-void startShuttles(void);
+void startShuttles(BOOL reStart);
 void stopShuttles(void);
 void sendShuttleStatus( BYTE shuttleEvent, BYTE i);
 

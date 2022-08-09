@@ -245,7 +245,7 @@ void main(void) {
                     CSStatus.busOn = TRUE;
                     send_stat();                             // send command station status message (after additional half sec to ensure cabs had time to reset)
                     sendStartOfDay( (ModEVPtr) NVPtr );     // If start of day event configured, send it now
-                    startShuttles();
+                    startShuttles(FALSE);
                     CSStatus.resetDone = FALSE;
                 }    
             }

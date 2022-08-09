@@ -435,8 +435,15 @@ void loco_function(enum funcops dofunc, BYTE session, BYTE funcnum) {
         // Handle is valid so update function byte
 
         funcvalues = 1;
-
-        if (funcnum > 20) {
+        
+        if (funcnum > 28)
+        {
+            funcrange = 6;
+            funcnum -= 29;
+            funcvalues <<= funcnum;  // not enough bits!
+        }    
+            
+        else if (funcnum > 20) {
             funcrange = 5;
             funcnum -= 21;
             funcvalues <<= funcnum;
@@ -1313,6 +1320,11 @@ void cbus_event(ecan_rx_buffer * rx_ptr, ModNVPtr cmdNVPtr)
             case HC_PWR_CTL:
                 power_control(rx_ptr->d0 == OPC_ACON);
                 break;
+                
+            case HC_RESET:
+                if (cmdNVPtr->userflags.PermitEventReset)
+                    Reset();
+                break;
         }        
     }    
 
@@ -1329,7 +1341,7 @@ void cbus_event(ecan_rx_buffer * rx_ptr, ModNVPtr cmdNVPtr)
                 break;
                         
             case SH_POC_START_EN:
-                startShuttles();
+                startShuttles(TRUE);  // True for restart, so don't need autostart flag set
                 break;
                 
             case SH_POC_STOP_EN:
@@ -1571,17 +1583,17 @@ void initShuttles(ModNVPtr cmdNVPtr)
     
 }
 
-void startShuttles(void)
+void startShuttles(BOOL reStart)
 
 {
     BYTE shuttleNum, session;
     
     if (sh_poc_enabled)
     {    
-        // Start or restart any predefined shuttles with the autostart flag set
+        // Start or restart any predefined shuttles. If we are starting at reset, only those with the autostart flag set
         for (shuttleNum=0; shuttleNum<MAX_SHUTTLES; shuttleNum++)
         {
-            if (activeShuttleTable[shuttleNum].flags.valid && activeShuttleTable[shuttleNum].flags.autostart)
+            if (activeShuttleTable[shuttleNum].flags.valid && (activeShuttleTable[shuttleNum].flags.autostart || reStart))
             {
                 // Send status event for shuttle found
                 sendShuttleStatus( SHUTTLE_EVENT+1, shuttleNum);
@@ -1624,6 +1636,7 @@ void stopShuttles(void)
         }  
 
     }
+}    
 
 
 void sendShuttleStatus( BYTE shuttleEvent, BYTE i)
