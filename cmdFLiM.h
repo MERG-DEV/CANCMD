@@ -67,7 +67,7 @@
 // Definitions for DCC accessory routes
 
 #define MAX_ROUTES 10
-#define ACCS_PER_ROUTE 8
+#define ACCS_PER_ROUTE 6
 
 
 // Event numbers for transmitted CBUS events
@@ -250,8 +250,8 @@ typedef	struct
     BYTE		sodDelay;		// Delay before sending start of day event (after initial startup delay)
     BYTE        honkInterval;    // How often honk/whistle sounds in POC shuttle
     BYTE		maxSpeed;         // Maximum speed regardless of commands from cab (kids mode!)
-    ShuttleEntry	shuttletable[MAX_SHUTTLES];
-    AccessoryRoute  accRouteTable[MAX_ROUTES];
+    ShuttleEntry	shuttletable[MAX_SHUTTLES];  // 4 bytes per shuttle table entry
+    AccessoryRoute  accRouteTable[MAX_ROUTES];  // 14 bytes per route
 } ModuleNodeDefs;		
 
 typedef union

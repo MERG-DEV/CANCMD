@@ -89,7 +89,7 @@ BOOL parse_cbus_event(void);
 
 #define POC_MAX         2
 
-#else  // Other shuttles using a range of short events, base event number plus shuttle no. to define event to use
+#else  // Other shuttles using a range of events, base event number plus shuttle no. to define event to use
 
 #define SH_POC_CTL_NODE 162             // Shuttle Control Node 
 #define	SH_POC_ENABLE_EN 5              //   event to enable shuttles
