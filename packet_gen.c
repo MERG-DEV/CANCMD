@@ -1641,12 +1641,12 @@ void stopShuttles(void)
 
 void sendShuttleStatus( BYTE shuttleEvent, BYTE i)
 {
-    Tx1[d0] = OPC_ACON3;
-    Tx1[d3] = 0;
-    Tx1[d4] = shuttleEvent;
-    Tx1[d5] = i;
-//    Tx1[d5] = activeShuttleTable[i].set_speed;
-    Tx1[d6] = activeShuttleTable[i].loco_addr.addr_hi.byte;
-    Tx1[d7] = activeShuttleTable[i].loco_addr.addr_lo;
-    sendCbusMsgNN(Node_id);         
+//    Tx1[d0] = OPC_ACON3;
+//    Tx1[d3] = 0;
+//    Tx1[d4] = shuttleEvent;
+//    Tx1[d5] = i;
+////    Tx1[d5] = activeShuttleTable[i].set_speed;
+//    Tx1[d6] = activeShuttleTable[i].loco_addr.addr_hi.byte;
+//    Tx1[d7] = activeShuttleTable[i].loco_addr.addr_lo;
+//    sendCbusMsgNN(Node_id);         
 }
