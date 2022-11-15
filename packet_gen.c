@@ -1427,20 +1427,24 @@ void reverseShuttleAtSensor( BYTE shuttleIndex, BOOL fwdSensor )
         setSpeed.velocity = activeShuttleTable[shuttleIndex].set_speed;
         sendShuttleStatus(SHUTTLE_EVENT+4, shuttleIndex);
 
+        if ((activeShuttleTable[shuttleIndex].flags.fwdDirBit && fwdSensor) == setSpeed.direction)
+            reverseShuttle(shuttleIndex);
+        
+        
 //        if (activeShuttleTable[shuttleIndex].flags.directionSet) 
 //        {
 //            if ((activeShuttleTable[shuttleIndex].flags.fwdDirBit && fwdSensor) == setSpeed.direction)
 //                reverseShuttle(shuttleIndex);
 //        } else
-        {
-            activeShuttleTable[shuttleIndex].flags.fwdDirBit = (setSpeed.direction && fwdSensor);
-            activeShuttleTable[shuttleIndex].flags.directionSet = TRUE;
-            reverseShuttle(shuttleIndex);
-        }
+//        {
+//            activeShuttleTable[shuttleIndex].flags.fwdDirBit = (setSpeed.direction && fwdSensor);
+//            activeShuttleTable[shuttleIndex].flags.directionSet = TRUE;
+//            reverseShuttle(shuttleIndex);
+//        }
     }
 }
 
-// For POC, the delayed event is always form turning off honk/whistle 
+// For POC, the delayed event is always from turning off honk/whistle 
 
 void processDelayedEvent(DelayListEntry eventEntry, ModNVPtr cmdNVPtr)
  {
@@ -1557,6 +1561,12 @@ void initShuttles(ModNVPtr cmdNVPtr)
             activeShuttleTable[i].flags.byte = nodevartable.module_nodevars.shuttletable[i].flags.byte;
             activeShuttleTable[i].loco_addr =  nodevartable.module_nodevars.shuttletable[i].loco_addr;
             activeShuttleTable[i].set_speed =  nodevartable.module_nodevars.shuttletable[i].default_speed;
+            
+            if (nodevartable.module_nodevars.shuttletable[i].flags.fwdDirBit)
+            {
+                activeShuttleTable[i].set_speed |= 0x80;   // Set opposite direction if flag set
+            }    
+            
             
             // Send status event for shuttle found
             sendShuttleStatus( SHUTTLE_EVENT, i);
