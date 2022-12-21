@@ -181,5 +181,6 @@ extern near BYTE        dcc_buff_m[7];
 
 extern ModeWord         mode_word;
 extern BYTE             tmr0_reload;
+extern BYTE             startupTimer;
 
 #endif	// __CANCMD_H

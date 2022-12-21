@@ -72,8 +72,20 @@
 
 // Event numbers for transmitted CBUS events
 
-#define AMPERAGE_EVENT  1
-#define SHUTTLE_EVENT   10
+#define AMPERAGE_EVENT          1
+
+#define SHUTTLE_EVENT_INIT      10  // Byte 5 = Shuttle Number
+#define SHUTTLE_EVENT_FOUND     11  // Byte 5 = Shuttle Number
+#define SHUTTLE_EVENT_REV       12  // Byte 5 = Old speed
+#define SHUTTLE_EVENT_SENSOR    13  // Byte 5 = FWD sensor = 1
+#define SHUTTLE_EVENT_SPEED     14  // Byte 5 = Speed
+#define SHUTTLE_EVENT_FLAGS     15  // Byte 5 = Shuttle flags
+#define SHUTTLE_EVENT_DIRSET    16  // Byte 5 = Shuttle flags
+#define SHUTTLE_EVENT_SESSION   17  // Byte 5 = Session Number
+#define SHUTTLE_EVENT_RESUME    18  // Byte 5 = Speed
+#define SHUTTLE_EVENT_STARTED   19  //
+#define SHUTTLE_EVENT_DECISION  20  // Byte 5 = BOOLEAN
+
 
 // Hard coded events for Command station management (will be teachable in later version using CBUSLIB)
 

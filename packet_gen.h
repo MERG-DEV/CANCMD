@@ -207,7 +207,7 @@ void speed_update( BYTE session, BYTE speed );
 void function_update( BYTE session, BYTE funcrange, BYTE funcvalues );
 void queue_update(BYTE session, BYTE funcrange, BYTE funcvalues );
 void query_session(BYTE session);
-void release_loco(BYTE session);
+void release_loco(BYTE session, BOOL shuttlesActive );
 void cache_session( BYTE session );
 void purge_session(BYTE session);
 void check_session_timeouts( ModNVPtr NVPtr );

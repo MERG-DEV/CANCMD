@@ -136,7 +136,7 @@ void parse_cmd(void) {
         case OPC_KLOC:
             // Release engine by session number
             session = rx_ptr->d1;
-            release_loco(session);
+            release_loco(session, cmdNVptr->userflags.shuttles);
             break;
 
         case OPC_QLOC:

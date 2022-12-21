@@ -71,7 +71,16 @@ const rom char          module_type[] = MODULE_TYPE;
 
 // const rom EventTableEntry eventTable[MAX_EVT];  // Events will be supported in version 5
 const rom NodevarTable	nodevartable = { DEFAULT_CS_NUM, DEFAULT_USER_FLAGS, DEFAULT_OP_FLAGS, DEBUG_FLAGS, DEFAULT_WALK_TIMEOUT, MAIN_CURRENT_LIMIT ,
-                                         SVC_CURRENT_LIMIT, MAIN_CURRENT_MULT, SVC_ACK_DIFF, SHOOTTHRU_DELAY,0,0,AMPERAGE_REPORTING,DEFAULT_SOD_DELAY,DEFAULT_HONK_INTERVAL,DEFAULT_MAX_SPEED};
+                                         SVC_CURRENT_LIMIT, MAIN_CURRENT_MULT, SVC_ACK_DIFF, SHOOTTHRU_DELAY,0,0,AMPERAGE_REPORTING,DEFAULT_SOD_DELAY,DEFAULT_HONK_INTERVAL,DEFAULT_MAX_SPEED,
+
+
+// Test values for debugging shuttles
+#if DEBUG_SHUTTLES
+                                        68,0,10,0x85};
+#else
+                                        };
+#endif
+
 
 const rom BYTE topofFLiM = 99;
 

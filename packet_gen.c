@@ -715,7 +715,7 @@ void check_session_timeouts(ModNVPtr NVPtr) {
         if ((q_queue[i].status.valid) && (!q_queue[i].status.dispatched) && (!q_queue[i].status.shuttle)) {
             if (--q_queue[i].timeout == 0) {
                 if (((q_queue[i].speed & 0x7F) == 0) || !NVPtr->userflags.stopontimeout) {
-                    release_loco(i); // Will dispatch if speed non-zero
+                    release_loco(i, FALSE); // Will dispatch if speed non-zero
                     force_release(i, FALSE); // Send session not found message
                 } else // Speed non zero and stop on timeout flag set, so stop train first
                 {
@@ -734,7 +734,7 @@ void check_session_timeouts(ModNVPtr NVPtr) {
 // If loco is moving, mark as dispatched, otherwise mark session as available (cache loco data)
 //
 
-void release_loco(BYTE session) {
+void release_loco(BYTE session, BOOL shuttlesActive) {
 
     if (q_queue[session].status.valid == 1) {
         if (q_queue[session].status.share_count > 0) {
@@ -744,9 +744,10 @@ void release_loco(BYTE session) {
         } else {
             q_queue[session].status.dispatched = 1;
             // Temporary code for shuttle proof of concept - populate first 3 shuttle entries with dispatched locos
-            if (!populate_shuttle(session, 0, TRUE)) {
-                if (!populate_shuttle(session, 1, TRUE)) {
-                    populate_shuttle(session, 2, TRUE);
+            if (shuttlesActive)
+                if (!populate_shuttle(session, 0, TRUE)) {
+                    if (!populate_shuttle(session, 1, TRUE)) {
+                        populate_shuttle(session, 2, TRUE);
                 }
             }
         }
@@ -1276,7 +1277,7 @@ void checkToTiInputs()
 
 void cbus_event(ecan_rx_buffer * rx_ptr, ModNVPtr cmdNVPtr)
 {
-    BYTE shuttle_index, session;
+    BYTE base_index, shuttle_index, session;
     WORD eventNode, eventNum;
 
     eventNode  = rx_ptr->d1;
@@ -1394,10 +1395,10 @@ void cbus_event(ecan_rx_buffer * rx_ptr, ModNVPtr cmdNVPtr)
  
         if (((eventNode == SH_FWD_NODE) || (eventNode == SH_REV_NODE)) && ((rx_ptr->d0 == OPC_ACON) || (rx_ptr->d0 == OPC_ASON)))
         {    
-            shuttle_index = (eventNode == SH_FWD_NODE ? SH_FWD_EN : SH_REV_EN );
+            base_index = (eventNode == SH_FWD_NODE ? SH_FWD_EN : SH_REV_EN );
             
-            shuttle_index = eventNum - shuttle_index;
-            sendShuttleStatus(SHUTTLE_EVENT+3, shuttle_index);
+            shuttle_index = eventNum - base_index;
+            sendShuttleStatus(SHUTTLE_EVENT_SENSOR, (eventNode == SH_FWD_NODE));
             reverseShuttleAtSensor( shuttle_index, (eventNode == SH_FWD_NODE) );
             
         } // if reversing sensor node number
@@ -1411,40 +1412,29 @@ void reverseShuttleAtSensor( BYTE shuttleIndex, BOOL fwdSensor )
     
     BYTE        session;
     DCCSpeed    setSpeed;
+    BOOL        doReverse, fwdDir;
     
     session = getShuttleSession(shuttleIndex);
-    Tx1[d0] = OPC_ACON3;
-    Tx1[d3] = 0;
-    Tx1[d4] = SHUTTLE_EVENT+6;
-    Tx1[d5] = session;
-//    Tx1[d5] = activeShuttleTable[i].set_speed;
-    Tx1[d6] = activeShuttleTable[shuttleIndex].loco_addr.addr_hi.byte;
-    Tx1[d7] = activeShuttleTable[shuttleIndex].loco_addr.addr_lo;
-    sendCbusMsgNN(Node_id);        
-            
+                
     if ( session != 0xFF) 
     {
         setSpeed.velocity = activeShuttleTable[shuttleIndex].set_speed;
-        sendShuttleStatus(SHUTTLE_EVENT+4, shuttleIndex);
+        sendShuttleStatus(SHUTTLE_EVENT_FLAGS, activeShuttleTable[shuttleIndex].flags.byte);
+        sendShuttleStatus(SHUTTLE_EVENT_SPEED, setSpeed.velocity);        
 
-        if ((activeShuttleTable[shuttleIndex].flags.fwdDirBit && fwdSensor) == setSpeed.direction)
+        if (!activeShuttleTable[shuttleIndex].flags.directionSet)
+        {
+            activeShuttleTable[shuttleIndex].flags.fwdDirBit = (fwdSensor && !(setSpeed.direction));  // Flag to say that forward direction uses the forward sensor
+            activeShuttleTable[shuttleIndex].flags.directionSet = TRUE;
+            sendShuttleStatus(SHUTTLE_EVENT_DIRSET, activeShuttleTable[shuttleIndex].flags.byte);
+        }    
+
+        if ((activeShuttleTable[shuttleIndex].flags.fwdDirBit == setSpeed.direction)  == !fwdSensor)
             reverseShuttle(shuttleIndex);
-        
-        
-//        if (activeShuttleTable[shuttleIndex].flags.directionSet) 
-//        {
-//            if ((activeShuttleTable[shuttleIndex].flags.fwdDirBit && fwdSensor) == setSpeed.direction)
-//                reverseShuttle(shuttleIndex);
-//        } else
-//        {
-//            activeShuttleTable[shuttleIndex].flags.fwdDirBit = (setSpeed.direction && fwdSensor);
-//            activeShuttleTable[shuttleIndex].flags.directionSet = TRUE;
-//            reverseShuttle(shuttleIndex);
-//        }
     }
 }
 
-// For POC, the delayed event is always from turning off honk/whistle 
+// For POC, the delayed event is always from turning off honk/whistle or restarting a shuttle after pause
 
 void processDelayedEvent(DelayListEntry eventEntry, ModNVPtr cmdNVPtr)
  {
@@ -1480,6 +1470,7 @@ void processDelayedEvent(DelayListEntry eventEntry, ModNVPtr cmdNVPtr)
         case eaStart:
             if ((session = getShuttleSession(eventIndex)) != 0xFF)
                 speed_update(session, activeShuttleTable[ eventIndex ].set_speed); // set speed to stored value
+                sendShuttleStatus(SHUTTLE_EVENT_RESUME,activeShuttleTable[ eventIndex ].set_speed);        
             break;
     } // switch
     
@@ -1501,10 +1492,11 @@ BYTE getShuttleSession(BYTE shuttleIndex) // Return 0xFF if shuttle index or ses
 
     if ((shuttleIndex <= POC_MAX) && (activeShuttleTable[ shuttleIndex ].flags.valid)) {
         session = activeShuttleTable[ shuttleIndex ].session;
-        sendShuttleStatus(SHUTTLE_EVENT+7,shuttleIndex);        
         
         if (q_queue[session].status.valid != 1)
             session = 0xFF;
+        
+        sendShuttleStatus(SHUTTLE_EVENT_SESSION,session);        
     }
     return ( session);
 } // getShuttleSession
@@ -1527,7 +1519,7 @@ void reverseShuttle(BYTE shuttleIndex)
         // loco_function( funcoff, session, 4 );		// Turn off sound functions
 
         speed_update(session, newSpeed);
-        sendShuttleStatus( SHUTTLE_EVENT+2, shuttleIndex);
+        sendShuttleStatus( SHUTTLE_EVENT_REV, activeShuttleTable[ shuttleIndex ].set_speed);
     }
 } // reverseShuttle
 
@@ -1548,6 +1540,10 @@ void initShuttles(ModNVPtr cmdNVPtr)
     int i;
     
     sh_poc_enabled = cmdNVPtr->userflags.shuttles;
+#if DEBUG_SHUTTLES    
+    sh_poc_enabled = TRUE;
+#endif    
+    
     
  	// Initialise active shuttle table and copy predefined shuttles info from NVs into active shuttle table
 
@@ -1561,15 +1557,9 @@ void initShuttles(ModNVPtr cmdNVPtr)
             activeShuttleTable[i].flags.byte = nodevartable.module_nodevars.shuttletable[i].flags.byte;
             activeShuttleTable[i].loco_addr =  nodevartable.module_nodevars.shuttletable[i].loco_addr;
             activeShuttleTable[i].set_speed =  nodevartable.module_nodevars.shuttletable[i].default_speed;
-            
-            if (nodevartable.module_nodevars.shuttletable[i].flags.fwdDirBit)
-            {
-                activeShuttleTable[i].set_speed |= 0x80;   // Set opposite direction if flag set
-            }    
-            
-            
+          
             // Send status event for shuttle found
-            sendShuttleStatus( SHUTTLE_EVENT, i);
+            sendShuttleStatus( SHUTTLE_EVENT_INIT, i);
         }
         else
             activeShuttleTable[i].flags.byte = 0;
@@ -1606,7 +1596,7 @@ void startShuttles(BOOL reStart)
             if (activeShuttleTable[shuttleNum].flags.valid && (activeShuttleTable[shuttleNum].flags.autostart || reStart))
             {
                 // Send status event for shuttle found
-                sendShuttleStatus( SHUTTLE_EVENT+1, shuttleNum);
+                sendShuttleStatus( SHUTTLE_EVENT_FOUND, shuttleNum);
 
                 // Create a loco session for shuttle if it doesn't already exist, will send a ploc if successful so we can see it did it on CBUS
                 if ((session = activeShuttleTable[ shuttleNum ].session ) == 0xFF)
@@ -1615,14 +1605,24 @@ void startShuttles(BOOL reStart)
                     activeShuttleTable[ shuttleNum ].session = session;
                     activeShuttleTable[ shuttleNum ].flags.started = TRUE;
                     q_queue[session].status.shuttle = 1;
+                    sendShuttleStatus( SHUTTLE_EVENT_SESSION, session);
                 }    
 
+                if (session != 0xFF)  
+                {    
+                // Turn on lights and sound (assumed F0 for lights and F1 for sound)
+                    loco_function(funcon, session, 0);  // Lights
+                    loco_function(funcon, session, 1);  // Sound (or carriage lights on some))                
+                
                 // Set shuttle going at speed stored in shuttle table    
-                if (session != 0xFF)    
+                  
                     speed_update(session, activeShuttleTable[ shuttleNum ].set_speed);
+                    sendShuttleStatus( SHUTTLE_EVENT_SPEED, activeShuttleTable[ shuttleNum ].set_speed);
+                }    
             }  
         } 
     }
+    sendShuttleStatus( SHUTTLE_EVENT_STARTED, 0 );
 }    
 
     
@@ -1637,7 +1637,7 @@ void stopShuttles(void)
         if (activeShuttleTable[shuttleNum].flags.valid)
         {
             // Send status event for shuttle found
-            sendShuttleStatus( SHUTTLE_EVENT+1, shuttleNum);
+            sendShuttleStatus( SHUTTLE_EVENT_FOUND, shuttleNum);
 
             // Save current speed and set speed to zero
             session = activeShuttleTable[ shuttleNum ].session;
@@ -1651,12 +1651,18 @@ void stopShuttles(void)
 
 void sendShuttleStatus( BYTE shuttleEvent, BYTE i)
 {
-//    Tx1[d0] = OPC_ACON3;
-//    Tx1[d3] = 0;
-//    Tx1[d4] = shuttleEvent;
-//    Tx1[d5] = i;
-////    Tx1[d5] = activeShuttleTable[i].set_speed;
-//    Tx1[d6] = activeShuttleTable[i].loco_addr.addr_hi.byte;
-//    Tx1[d7] = activeShuttleTable[i].loco_addr.addr_lo;
-//    sendCbusMsgNN(Node_id);         
+#if DEBUG_SHUTTLES
+    
+    if (startupTimer == 0)
+    {    
+        Tx1[d0] = OPC_ACON3;
+        Tx1[d3] = 0;
+        Tx1[d4] = shuttleEvent;
+        Tx1[d5] = i;
+    //    Tx1[d5] = activeShuttleTable[i].set_speed;
+        Tx1[d6] = activeShuttleTable[i].loco_addr.addr_hi.byte;
+        Tx1[d7] = activeShuttleTable[i].loco_addr.addr_lo;
+        sendCbusMsgNN(Node_id);      
+    }
+#endif    
 }
