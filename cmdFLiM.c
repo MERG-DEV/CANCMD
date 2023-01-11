@@ -76,7 +76,9 @@ const rom NodevarTable	nodevartable = { DEFAULT_CS_NUM, DEFAULT_USER_FLAGS, DEFA
 
 // Test values for debugging shuttles
 #if DEBUG_SHUTTLES
-                                        68,0,10,0x85};
+                                       68,0,10,0x85};
+#elif FFQ_SHUTTLES
+                                       3,200,32,0x85,83,197,40,0x85,7,192,28,0x85,136,192,50,0x85};
 #else
                                         };
 #endif

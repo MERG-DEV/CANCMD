@@ -1540,7 +1540,7 @@ void initShuttles(ModNVPtr cmdNVPtr)
     int i;
     
     sh_poc_enabled = cmdNVPtr->userflags.shuttles;
-#if DEBUG_SHUTTLES    
+#if DEBUG_SHUTTLES || FFQ_SHUTTLES  
     sh_poc_enabled = TRUE;
 #endif    
     
