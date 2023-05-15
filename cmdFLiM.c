@@ -271,7 +271,7 @@ BYTE BlinkLED( BOOL blinkstatus )
 
 void amperage_messages(void)
 {
-    WORD_VAL   amperage;
+    WORD_VAL  amperage;
     BYTE    multiplier;
     BYTE    AtoDvalue;
 

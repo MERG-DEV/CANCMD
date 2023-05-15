@@ -997,9 +997,9 @@ BOOL dccAccessoryRoute(WORD event_num, BOOL accOn)
 
         routeCounter = 0;
         
-        while ((routeCounter < MAX_ROUTES) &&  !(routeFound = (routePtr->mappedEvent == event_num))) 
+        while (routeCounter < MAX_ROUTES)
         {    
-            if (routeFound)
+            if (routeFound = (routePtr->mappedEvent == event_num))
             {    
                 for (acc = 0; acc < ACCS_PER_ROUTE; acc++)
                 {
@@ -1290,7 +1290,7 @@ void cbus_event(ecan_rx_buffer * rx_ptr, ModNVPtr cmdNVPtr)
     eventNum <<= 8;
     eventNum += rx_ptr->d4;
     
-    if ((rx_ptr->d0 == OPC_ASON) || (rx_ptr->d0 == OPC_ASOF))
+    if ((rx_ptr->d0 == OPC_ASON) || (rx_ptr->d0 == OPC_ASOF) || (rx_ptr->d0 == OPC_ARSON) || (rx_ptr->d0 == OPC_ARSOF))
         eventNode = 0; // Flag node as zero for short events
     
     // eventNum  = (rx_ptr->d3 << 8) + rx_ptr->d4;  // gets wrong answer compared to 3 lines above - probably issue with promoting byte operand to word
@@ -1393,7 +1393,7 @@ void cbus_event(ecan_rx_buffer * rx_ptr, ModNVPtr cmdNVPtr)
             }
         }
  
-        if (((eventNode == SH_FWD_NODE) || (eventNode == SH_REV_NODE)) && ((rx_ptr->d0 == OPC_ACON) || (rx_ptr->d0 == OPC_ASON)))
+        if (((eventNode == SH_FWD_NODE) || (eventNode == SH_REV_NODE)) && ((rx_ptr->d0 == OPC_ACON) || (rx_ptr->d0 == OPC_ASON) || (rx_ptr->d0 == OPC_ARON) || (rx_ptr->d0 == OPC_ARSON) ))
         {    
             base_index = (eventNode == SH_FWD_NODE ? SH_FWD_EN : SH_REV_EN );
             
@@ -1405,6 +1405,27 @@ void cbus_event(ecan_rx_buffer * rx_ptr, ModNVPtr cmdNVPtr)
     } //  if POC shuttles enabled
 } // cbus_event
 
+void requestSensorStates( BYTE shuttleNum )
+
+{
+    WORD    fwdEvent;
+    WORD    revEvent;
+    
+    fwdEvent = SH_FWD_EN + shuttleNum;
+    revEvent = SH_REV_EN + shuttleNum;
+    
+    Tx1[d0] = (SH_FWD_NODE == 0 ? OPC_ASRQ : OPC_AREQ);
+    Tx1[d3] = fwdEvent >> 8;
+    Tx1[d4] = fwdEvent & 0xFF;
+    sendCbusMsgNN(SH_FWD_NODE);
+    
+    Tx1[d0] = (SH_REV_NODE == 0 ? OPC_ASRQ : OPC_AREQ);
+    Tx1[d3] = revEvent >> 8;
+    Tx1[d4] = revEvent & 0xFF;
+    sendCbusMsgNN(SH_REV_NODE);
+        
+    // Responses will be handled in cbus_event    
+}
 
 void reverseShuttleAtSensor( BYTE shuttleIndex, BOOL fwdSensor )
 
@@ -1557,6 +1578,8 @@ void initShuttles(ModNVPtr cmdNVPtr)
             activeShuttleTable[i].flags.byte = nodevartable.module_nodevars.shuttletable[i].flags.byte;
             activeShuttleTable[i].loco_addr =  nodevartable.module_nodevars.shuttletable[i].loco_addr;
             activeShuttleTable[i].set_speed =  nodevartable.module_nodevars.shuttletable[i].default_speed;
+            activeShuttleTable[i].flags.fwdDirBit = (nodevartable.module_nodevars.shuttletable[i].default_speed & 0x80) == 0;   
+            activeShuttleTable[i].flags.directionSet = TRUE;
           
             // Send status event for shuttle found
             sendShuttleStatus( SHUTTLE_EVENT_INIT, i);
@@ -1618,6 +1641,9 @@ void startShuttles(BOOL reStart)
                   
                     speed_update(session, activeShuttleTable[ shuttleNum ].set_speed);
                     sendShuttleStatus( SHUTTLE_EVENT_SPEED, activeShuttleTable[ shuttleNum ].set_speed);
+                    
+                // Request status of sensors at each end, so if sensor we are heading for is already active, train will imediately reverse and go the right way when the response is received
+                    requestSensorStates( shuttleNum );
                 }    
             }  
         } 

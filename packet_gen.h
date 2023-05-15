@@ -222,6 +222,7 @@ void dccAccessoryWrite(WORD acc_num, BOOL accOn);
 BOOL dccAccessoryRoute(WORD event_num, BOOL accOn);
 void checkToTiInputs();
 void cbus_event(ecan_rx_buffer * rx_ptr, ModNVPtr cmdNVptr);
+void requestSensorStates( BYTE shuttleNum );
 void reverseShuttleAtSensor( BYTE shuttleIndex, BOOL fwdSensor );
 void processDelayedEvent( DelayListEntry eventEntry, ModNVPtr cmdNVPtr );
 void setShuttlesAuto( void );
