@@ -61,7 +61,7 @@
 
 #define MAJOR_VER 	4         // Major version number - add 100 for WIP
 #define MINOR_VER 	'f'       // Minor version character
-#define BETA            6     // Build number - set to 0 for release version
+#define BETA            7     // Build number - set to 0 for release version
 #define MODULE_FLAGS    PF_BOOT + PF_PRODUCER + PF_FLiM  // Producer, boot, FLiM
 #define BUS_TYPE        PB_CAN
 #define LOAD_ADDRESS    0x0800     // Need to put in parameter block at compile time, only known to linker so hard code here
