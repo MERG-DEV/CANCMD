@@ -87,6 +87,7 @@
 #define SHUTTLE_EVENT_DECISION  20  // Byte 5 = BOOLEAN
 
 
+
 // Hard coded events for Command station management (will be teachable in later version using CBUSLIB)
 
 #define HC_CS_NODE      167

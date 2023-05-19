@@ -1561,9 +1561,9 @@ void initShuttles(ModNVPtr cmdNVPtr)
     int i;
     
     sh_poc_enabled = cmdNVPtr->userflags.shuttles;
-#if DEBUG_SHUTTLES || FFQ_SHUTTLES  
-    sh_poc_enabled = TRUE;
-#endif    
+//#if DEBUG_SHUTTLES || FFQ_SHUTTLES  
+//    sh_poc_enabled = TRUE;
+//#endif    
     
     
  	// Initialise active shuttle table and copy predefined shuttles info from NVs into active shuttle table
@@ -1614,6 +1614,8 @@ void startShuttles(BOOL reStart)
     if (sh_poc_enabled)
     {    
         // Start or restart any predefined shuttles. If we are starting at reset, only those with the autostart flag set
+        
+        sendCbusEvent( SHUTTLE_EVENT_STARTED, TRUE );
         for (shuttleNum=0; shuttleNum<MAX_SHUTTLES; shuttleNum++)
         {
             if (activeShuttleTable[shuttleNum].flags.valid && (activeShuttleTable[shuttleNum].flags.autostart || reStart))
@@ -1659,6 +1661,7 @@ void stopShuttles(void)
 {
     BYTE shuttleNum, session;
  
+    sendCbusEvent( SHUTTLE_EVENT_STARTED, FALSE );
     // Stop all running shuttles 
     for (shuttleNum=0; shuttleNum<MAX_SHUTTLES; shuttleNum++)
     {
