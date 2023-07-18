@@ -94,6 +94,12 @@
 #define HC_STOP_ALL     103     // On event only for stop all
 #define HC_PWR_CTL      104     // On event for track power on, off event for track power off
 #define HC_RESET        105     // On event resets CS
+
+#ifdef KIMBLE
+#define KI_CS_NODE      452       
+#define KI_STOP_ALL     39
+#endif
+
 //
 #define DCC_ACC_ROUTE_SIZE  8
 

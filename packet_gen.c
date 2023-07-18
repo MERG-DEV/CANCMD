@@ -1308,8 +1308,12 @@ void cbus_event(ecan_rx_buffer * rx_ptr, ModNVPtr cmdNVPtr)
     }
 
    // CS Management events
+#ifdef KIMBLE
+    if ((eventNode == KI_CS_NODE) && (eventNum == KI_STOP_ALL) && (rx_ptr->d0 == OPC_ACON))
+        stopAll();
+#endif
     
-    if (eventNode == HC_CS_NODE)
+    if (eventNode == HC_CS_NODE) 
     {
         switch (eventNum)
         {
