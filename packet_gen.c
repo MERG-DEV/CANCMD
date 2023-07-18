@@ -1493,7 +1493,7 @@ void processDelayedEvent(DelayListEntry eventEntry, ModNVPtr cmdNVPtr)
         
 
         case eaStart:
-            if ((session = getShuttleSession(eventIndex)) != 0xFF)
+            if (((session = getShuttleSession(eventIndex)) != 0xFF) && (!activeShuttleTable[ eventIndex ].flags.paused))
                 speed_update(session, activeShuttleTable[ eventIndex ].set_speed); // set speed to stored value
                 sendShuttleStatus(SHUTTLE_EVENT_RESUME,activeShuttleTable[ eventIndex ].set_speed);        
             break;
@@ -1639,6 +1639,8 @@ void startShuttles(BOOL reStart)
 
                 if (session != 0xFF)  
                 {    
+                    activeShuttleTable[ shuttleNum ].flags.paused = FALSE;
+                    
                 // Turn on lights and sound (assumed F0 for lights and F1 for sound)
                     loco_function(funcon, session, 0);  // Lights
                     loco_function(funcon, session, 1);  // Sound (or carriage lights on some))                
@@ -1674,6 +1676,9 @@ void stopShuttles(void)
 
             // Save current speed and set speed to zero
             session = activeShuttleTable[ shuttleNum ].session;
+            activeShuttleTable[ shuttleNum ].flags.paused = TRUE;
+ 
+            
             activeShuttleTable[ shuttleNum ].set_speed = q_queue[session].speed;
             speed_update(session, 0);
         }  

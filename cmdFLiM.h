@@ -146,7 +146,7 @@ typedef	union
         BOOL    manual:1;
         BOOL    directionSet:1;
         BOOL    fwdDirBit:1;
-        BOOL    spare:1;
+        BOOL    paused:1;
         BOOL    initialised:1;   // Uninitialised shuttle entries have flag byte set to 0
     } ;   
     BYTE	byte;
