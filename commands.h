@@ -104,7 +104,7 @@ BOOL parse_cbus_event(void);
 #define SH_REV_NODE     164             // Node
 #define SH_REV_EN       12              //   and event for reverse end reversing sensor base event number (shuttle 0)
 
-#define SH_PAUSE_TIME   50              // Delayed event count for shuttle pause at each end
+#define SH_PAUSE_TIME   60              // Delayed event count for shuttle pause at each end
 #define SH_BUT_NODE     120             // Node for push buttons
 #define SH_BUT_EN       6               // Event base for shuttle buttons
 #define SH_HONK_EN      5               // Event for honk button

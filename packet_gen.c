@@ -1497,9 +1497,19 @@ void processDelayedEvent(DelayListEntry eventEntry, ModNVPtr cmdNVPtr)
 
         case eaStart:
             if (((session = getShuttleSession(eventIndex)) != 0xFF) && (!activeShuttleTable[ eventIndex ].flags.paused))
+            {    
                 speed_update(session, activeShuttleTable[ eventIndex ].set_speed); // set speed to stored value
                 sendShuttleStatus(SHUTTLE_EVENT_RESUME,activeShuttleTable[ eventIndex ].set_speed);        
+            }    
             break;
+            
+        case eaRqSensors:
+            if ((session = getShuttleSession(eventIndex)) != 0xFF)
+            {
+                requestSensorStates( eventIndex );
+            }    
+                
+            
     } // switch
     
 }
@@ -1653,8 +1663,9 @@ void startShuttles(BOOL reStart)
                     speed_update(session, activeShuttleTable[ shuttleNum ].set_speed);
                     sendShuttleStatus( SHUTTLE_EVENT_SPEED, activeShuttleTable[ shuttleNum ].set_speed);
                     
-                // Request status of sensors at each end, so if sensor we are heading for is already active, train will imediately reverse and go the right way when the response is received
-                    requestSensorStates( shuttleNum );
+                // Request status of sensors at each end, so if sensor we are heading for is already active, train will immediately reverse and go the right way when the response is received
+                    addDelayedEvent(shuttleNum,shuttleNum+3,eaRqSensors,0);
+                    // requestSensorStates( shuttleNum );
                 }    
             }  
         } 

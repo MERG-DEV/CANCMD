@@ -360,6 +360,7 @@ enum    eventActions
     eaIgnoreButton,
     eaOnEvent,
     eaOffEvent,
+    eaRqSensors,
 };
 
 typedef struct 
