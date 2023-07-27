@@ -1277,7 +1277,7 @@ void checkToTiInputs()
 
 void cbus_event(ecan_rx_buffer * rx_ptr, ModNVPtr cmdNVPtr)
 {
-    BYTE base_index, shuttle_index, session;
+    BYTE base_index, shuttle_index, session, opcode;
     WORD eventNode, eventNum;
 
     eventNode  = rx_ptr->d1;
@@ -1290,26 +1290,29 @@ void cbus_event(ecan_rx_buffer * rx_ptr, ModNVPtr cmdNVPtr)
     eventNum <<= 8;
     eventNum += rx_ptr->d4;
     
-    if ((rx_ptr->d0 == OPC_ASON) || (rx_ptr->d0 == OPC_ASOF) || (rx_ptr->d0 == OPC_ARSON) || (rx_ptr->d0 == OPC_ARSOF))
+    opcode = rx_ptr->d0;
+    
+    if ((opcode == OPC_ASON) || (opcode == OPC_ASOF) || (opcode == OPC_ARSON) || (opcode == OPC_ARSOF))
         eventNode = 0; // Flag node as zero for short events
     
     // eventNum  = (rx_ptr->d3 << 8) + rx_ptr->d4;  // gets wrong answer compared to 3 lines above - probably issue with promoting byte operand to word
    
     // Mapped CBUS event to DCC accessory - note that CBUS events count from 1 whilst DCC accessory addresses count from zero, so use CBUS event - 1
 
-    if (cmdNVPtr->userflags.mapdccacc) { // if Map CBUS event to DCC accessory command turned on
-        if (((rx_ptr->d0 == OPC_ASON) || (rx_ptr->d0 == OPC_ASOF)) && (cmdNVPtr->mappednode == 0) // Short event
-        ||  ((rx_ptr->d0 == OPC_ACON) || (rx_ptr->d0 == OPC_ACOF)) && (cmdNVPtr->mappednode == eventNode)) // Long event     
+    if (cmdNVPtr->userflags.mapdccacc) 
+    { // if Map CBUS event to DCC accessory command turned on
+        if (((opcode == OPC_ASON) || (opcode == OPC_ASOF)) && (cmdNVPtr->mappednode == 0) // Short event
+        ||  ((opcode == OPC_ACON) || (opcode == OPC_ACOF)) && (cmdNVPtr->mappednode == eventNode)) // Long event     
         {
             // Send a DCC accessory packet corresponding to the CBUS event received, or a route of packets if found
-            if (!dccAccessoryRoute(eventNum, (rx_ptr->d0 == OPC_ACON) || (rx_ptr->d0 == OPC_ASON)))
-                dccAccessoryWrite(eventNum-1, (rx_ptr->d0 == OPC_ACON) || (rx_ptr->d0 == OPC_ASON));
+            if (!dccAccessoryRoute(eventNum, (opcode == OPC_ACON) || (opcode == OPC_ASON)))
+                dccAccessoryWrite(eventNum-1, (opcode == OPC_ACON) || (opcode == OPC_ASON));
         }
     }
 
    // CS Management events
-#ifdef KIMBLE
-    if ((eventNode == KI_CS_NODE) && (eventNum == KI_STOP_ALL) && (rx_ptr->d0 == OPC_ACON))
+#ifdef KIMBLE_ES
+    if ((eventNode == KI_CS_NODE) && (eventNum == KI_STOP_ALL) && (opcode == OPC_ACON))
         stopAll();
 #endif
     
@@ -1318,12 +1321,12 @@ void cbus_event(ecan_rx_buffer * rx_ptr, ModNVPtr cmdNVPtr)
         switch (eventNum)
         {
             case HC_STOP_ALL:
-                if (rx_ptr->d0 == OPC_ACON)
+                if (opcode == OPC_ACON)
                     stopAll();
                 break;
                         
             case HC_PWR_CTL:
-                power_control(rx_ptr->d0 == OPC_ACON);
+                power_control(opcode == OPC_ACON);
                 break;
                 
             case HC_RESET:
@@ -1341,7 +1344,7 @@ void cbus_event(ecan_rx_buffer * rx_ptr, ModNVPtr cmdNVPtr)
         switch (eventNum)
         {
             case SH_POC_ENABLE_EN:
-                sh_poc_enabled = (cmdNVPtr->userflags.shuttles && (rx_ptr->d0 == OPC_ACON)); // Check if shuttles enabled (by switch and NV flag)
+                sh_poc_enabled = (cmdNVPtr->userflags.shuttles && (opcode == OPC_ACON)); // Check if shuttles enabled (by switch and NV flag)
                 setShuttlesAuto();
                 break;
                         
@@ -1359,7 +1362,7 @@ void cbus_event(ecan_rx_buffer * rx_ptr, ModNVPtr cmdNVPtr)
     {
         if (eventNode == SH_BUT_NODE)
         {    
-            if ((eventNum == SH_HONK_EN) && (rx_ptr->d0 == OPC_ACON)) 
+            if ((eventNum == SH_HONK_EN) && (opcode == OPC_ACON)) 
             {
                 if ((session = getShuttleSession(0)) != 0xFF) {
                     if ((honkTypeCount > 4) || (honkTypeCount < 3))
@@ -1372,7 +1375,7 @@ void cbus_event(ecan_rx_buffer * rx_ptr, ModNVPtr cmdNVPtr)
 
             if ((session = getShuttleSession(shuttle_index = eventNum - SH_BUT_EN)) != 0xFF) 
             {
-                if (rx_ptr->d0 == OPC_ACON) 
+                if (opcode == OPC_ACON) 
                 {
                     activeShuttleTable[ shuttle_index ].flags.manual = TRUE;
                     if ((q_queue[session].speed & 0x7F) == 0) 
@@ -1388,7 +1391,7 @@ void cbus_event(ecan_rx_buffer * rx_ptr, ModNVPtr cmdNVPtr)
                     }
                 }
 
-                if ((rx_ptr->d0 == OPC_ACOF) && (q_queue[session].speed & 0x7F) != 0) {
+                if ((opcode == OPC_ACOF) && (q_queue[session].speed & 0x7F) != 0) {
                     if (activeShuttleTable[ shuttle_index ].flags.manual) {
                         activeShuttleTable[ shuttle_index ].set_speed = q_queue[session].speed;
                         speed_update(session, activeShuttleTable[ shuttle_index ].set_speed & 0x80); // set speed to zero but leave direction intact
@@ -1397,7 +1400,7 @@ void cbus_event(ecan_rx_buffer * rx_ptr, ModNVPtr cmdNVPtr)
             }
         }
  
-        if (((eventNode == SH_FWD_NODE) || (eventNode == SH_REV_NODE)) && ((rx_ptr->d0 == OPC_ACON) || (rx_ptr->d0 == OPC_ASON) || (rx_ptr->d0 == OPC_ARON) || (rx_ptr->d0 == OPC_ARSON) ))
+        if (((eventNode == SH_FWD_NODE) || (eventNode == SH_REV_NODE)) && ((opcode == OPC_ACON) || (opcode == OPC_ARON) || (opcode == OPC_ASON) || (opcode == OPC_ARSON) ))
         {    
             base_index = (eventNode == SH_FWD_NODE ? SH_FWD_EN : SH_REV_EN );
             
@@ -1679,7 +1682,7 @@ void stopShuttles(void)
             activeShuttleTable[ shuttleNum ].flags.paused = TRUE;
  
             
-            activeShuttleTable[ shuttleNum ].set_speed = q_queue[session].speed;
+            // activeShuttleTable[ shuttleNum ].set_speed = q_queue[session].speed;
             speed_update(session, 0);
         }  
 

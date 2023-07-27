@@ -285,6 +285,10 @@ BOOL parse_cbus_event(void) {
 		case OPC_ACOF:
         case OPC_ASON:
         case OPC_ASOF:
+        case OPC_ARON:
+		case OPC_AROF:
+        case OPC_ARSON:
+        case OPC_ARSOF:            
 	//	case OPC_ACON1:
 	//	case OPC_ACOF1:
 	//	case OPC_ACON2:
