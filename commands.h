@@ -96,13 +96,25 @@ BOOL parse_cbus_event(void);
 #define	SH_POC_START_EN 6              //   event to start shuttles
 #define	SH_POC_STOP_EN 7              //   event to stop shuttles
 
+#ifdef KMRS
 
+// Hard code events for Kingsway (KMRS) exhibition until sensor moduels updated to CANMIO (Universal) so producer events can be taught
+
+#define SH_FWD_NODE     1306             // Node
+#define SH_FWD_EN       9               //   and event for forward end reversing sensor base event number (shuttle 0)
+
+#define SH_REV_NODE     1311             // Node
+#define SH_REV_EN       10              //   and event for reverse end reversing sensor base event number (shuttle 0)
+ 
+#else
 
 #define SH_FWD_NODE     163             // Node
 #define SH_FWD_EN       12               //   and event for forward end reversing sensor base event number (shuttle 0)
 
 #define SH_REV_NODE     164             // Node
 #define SH_REV_EN       12              //   and event for reverse end reversing sensor base event number (shuttle 0)
+
+#endif
 
 #define SH_PAUSE_TIME   60              // Delayed event count for shuttle pause at each end
 #define SH_BUT_NODE     120             // Node for push buttons
