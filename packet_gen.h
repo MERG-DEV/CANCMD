@@ -233,6 +233,7 @@ void initShuttles(ModNVPtr cmdNVPtr);
 void startShuttles(BOOL reStart);
 void stopShuttles(void);
 void sendShuttleStatus( BYTE shuttleEvent, BYTE i);
+void setShuttleNVs( BYTE shuttleIndex );
 
 #define __PACKET_GEN_H
 #endif

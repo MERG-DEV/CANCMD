@@ -55,6 +55,7 @@
 //						 - add code for OPC_RQNPN
 //						 - add doError for command error response
 // 02/01/12 Pete Brownlow - Process WCVOA
+// 04/11/23 Pete Brownlow - Process ALOC to put loco into shuttle
 
 #include "project.h"
 
@@ -73,7 +74,7 @@ void cmd_cv(void);
 void parse_cmd(void) {
 
     WORD addr;
-    BYTE session, speed;
+    BYTE session, speed, shuttleIndex;
     enum glocModes  requestmode;
 
     mode_word.s_full = 0;
@@ -143,6 +144,18 @@ void parse_cmd(void) {
             // Query engine by session number
             session = rx_ptr->d1;
             query_session(session);
+            break;
+
+        case OPC_ALOC:
+            // Allocate loco to shuttle
+            session = rx_ptr->d1;
+            shuttleIndex = rx_ptr->d2;
+            if (cmdNVptr->userflags.shuttles)
+            {    
+                populate_shuttle(session, shuttleIndex, FALSE);
+                setShuttleNVs( shuttleIndex );
+            }    
+                    
             break;
 
         case OPC_RDCC3:

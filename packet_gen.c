@@ -396,7 +396,7 @@ void force_release(BYTE handle, BOOL stolen)
 // speed steps are supported. 28 with interleaved steps will send 28 steps.
 //
 //	If msbit of mode byte is set, then ls 7 bits are the shuttle number to release
-//	this loco into
+//	this loco into (no longer used as ALOC opcode now used instead)
 //
 
 void throttle_mode(void) {
@@ -406,14 +406,19 @@ void throttle_mode(void) {
     session = rx_ptr->d1;
 
     if (q_queue[session].status.valid == 1) {
-        if ((rx_ptr->d2 && 0x80) == 0) {
-            // Handle is valid so update it's mode
-            q_queue[session].status.throttle_mode = rx_ptr->d2 & TMOD_SPD_MASK;
-        } else {
-            shuttle_id = rx_ptr->d2 & 0x80;
-            set_shuttle_loco(session, shuttle_id);
-            q_queue[session].status.shuttle = TRUE;
-        }
+        // Handle is valid so update it's mode
+        q_queue[session].status.throttle_mode = rx_ptr->d2 & TMOD_SPD_MASK; 
+        
+        
+        
+//        if ((rx_ptr->d2 && 0x80) == 0) {
+//            // Handle is valid so update it's mode
+//            
+//        } else {
+//            shuttle_id = rx_ptr->d2 & 0x80;
+//            set_shuttle_loco(session, shuttle_id);
+//            q_queue[session].status.shuttle = TRUE;
+//        }
     } else {
         force_release(session, FALSE);
     }
@@ -736,22 +741,25 @@ void check_session_timeouts(ModNVPtr NVPtr) {
 
 void release_loco(BYTE session, BOOL shuttlesActive) {
 
-    if (q_queue[session].status.valid == 1) {
+    if (q_queue[session].status.valid == 1) 
+    {
         if (q_queue[session].status.share_count > 0) {
             q_queue[session].status.share_count--;
         } else if (!q_queue[session].status.shuttle && ((q_queue[session].speed & 0x7f) <= 1)) {
             cache_session(session);
-        } else {
+        } else 
+        {
             q_queue[session].status.dispatched = 1;
-            // Temporary code for shuttle proof of concept - populate first 3 shuttle entries with dispatched locos
-            if (shuttlesActive)
-                if (!populate_shuttle(session, 0, TRUE)) {
-                    if (!populate_shuttle(session, 1, TRUE)) {
-                        populate_shuttle(session, 2, TRUE);
-                }
-            }
+            // Temporary code for shuttle proof of concept - populate first 3 shuttle entries with dispatched locos - no longer used since can now allocate directly into shuttle
+//            if (shuttlesActive)
+//                if (!populate_shuttle(session, 0, TRUE)) {
+//                    if (!populate_shuttle(session, 1, TRUE)) {
+//                        populate_shuttle(session, 2, TRUE);
+//                }
+//            }
         }
-    } else {
+    } else 
+    {
         force_release(session, FALSE);
     }
 
@@ -1337,7 +1345,7 @@ void cbus_event(ecan_rx_buffer * rx_ptr, ModNVPtr cmdNVPtr)
     }    
 
     
-   // Proof of concept shuttle 
+   // Shuttle events
 
     if (eventNode == SH_POC_CTL_NODE)
     {        
@@ -1599,7 +1607,7 @@ void initShuttles(ModNVPtr cmdNVPtr)
             activeShuttleTable[i].flags.directionSet = TRUE;
           
             // Send status event for shuttle found
-            sendShuttleStatus( SHUTTLE_EVENT_INIT, i);
+            // sendShuttleStatus( SHUTTLE_EVENT_INIT, i);
         }
         else
             activeShuttleTable[i].flags.byte = 0;
@@ -1638,7 +1646,7 @@ void startShuttles(BOOL reStart)
             if (activeShuttleTable[shuttleNum].flags.valid && (activeShuttleTable[shuttleNum].flags.autostart || reStart))
             {
                 // Send status event for shuttle found
-                sendShuttleStatus( SHUTTLE_EVENT_FOUND, shuttleNum);
+                // sendShuttleStatus( SHUTTLE_EVENT_FOUND, shuttleNum);
 
                 // Create a loco session for shuttle if it doesn't already exist, will send a ploc if successful so we can see it did it on CBUS
                 if ((session = activeShuttleTable[ shuttleNum ].session ) == 0xFF)
@@ -1647,7 +1655,7 @@ void startShuttles(BOOL reStart)
                     activeShuttleTable[ shuttleNum ].session = session;
                     activeShuttleTable[ shuttleNum ].flags.started = TRUE;
                     q_queue[session].status.shuttle = 1;
-                    sendShuttleStatus( SHUTTLE_EVENT_SESSION, session);
+                    // sendShuttleStatus( SHUTTLE_EVENT_SESSION, session);
                 }    
 
                 if (session != 0xFF)  
@@ -1686,7 +1694,7 @@ void stopShuttles(void)
         if (activeShuttleTable[shuttleNum].flags.valid)
         {
             // Send status event for shuttle found
-            sendShuttleStatus( SHUTTLE_EVENT_FOUND, shuttleNum);
+            // sendShuttleStatus( SHUTTLE_EVENT_FOUND, shuttleNum);
 
             // Save current speed and set speed to zero
             session = activeShuttleTable[ shuttleNum ].session;
@@ -1717,4 +1725,25 @@ void sendShuttleStatus( BYTE shuttleEvent, BYTE i)
         sendCbusMsgNN(Node_id);      
     }
 #endif    
+}
+
+void setShuttleNVs( BYTE shuttleIndex )
+{
+    // This is used to set the NVs for a shuttle in response to the user setting a loco into a shuttle from the handset
+ 
+    BYTE            NVindx;
+    ShuttleFlags    sflags;
+     
+    NVindx = SHUTTLE_TABLE_NV;
+    
+    NVindx += (shuttleIndex * sizeof(ShuttleEntry));
+    
+    doNvset(NVindx++, activeShuttleTable[shuttleIndex].loco_addr.addr_lo);    
+    doNvset(NVindx++, activeShuttleTable[shuttleIndex].loco_addr.addr_hi.byte);
+    doNvset(NVindx++, activeShuttleTable[shuttleIndex].set_speed);
+    sflags = activeShuttleTable[shuttleIndex].flags;
+    sflags.autostart = TRUE;
+    sflags.started = FALSE;                 // In NVs table shuttle is not yet started as this is used at startup
+    doNvset(NVindx++, sflags.byte);    
+
 }

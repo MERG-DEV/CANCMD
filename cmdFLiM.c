@@ -333,6 +333,8 @@ void set_shuttle_loco( BYTE session, BYTE shuttle_id )
 
 {
     BYTE prev_shuttle_session;
+    BYTE defaultSpeed;
+    BYTE countValue;
 
     if ((shuttle_id < MAX_SHUTTLES) && (q_queue[session].status.valid == 1))
     {
@@ -358,17 +360,24 @@ void set_shuttle_loco( BYTE session, BYTE shuttle_id )
         activeShuttleTable[ shuttle_id ].loco_addr = q_queue[session].address;
 
 
+        if (nodevartable.module_nodevars.shuttletable[shuttle_id].flags.valid)
+            defaultSpeed = nodevartable.module_nodevars.shuttletable[shuttle_id].default_speed;
+        else
+            defaultSpeed = 10;
+                    
         activeShuttleTable[ shuttle_id ].set_speed = (((q_queue[session].speed & 0x7F) == 0) ?
-        nodevartable.module_nodevars.shuttletable[shuttle_id].default_speed   :
-        q_queue[session].speed );
+        defaultSpeed  : q_queue[session].speed );
 
         activeShuttleTable[ shuttle_id ].counter = nodevartable.module_nodevars.honkInterval;
         
         activeShuttleTable[ shuttle_id ].flags.valid = TRUE;
         activeShuttleTable[ shuttle_id ].flags.started = TRUE;
         activeShuttleTable[ shuttle_id ].flags.manual = FALSE;
+        activeShuttleTable[ shuttle_id ].flags.initialised = TRUE;
         activeShuttleTable[ shuttle_id ].flags.directionSet = FALSE;
         q_queue[session].status.shuttle = TRUE;
+        q_queue[session].status.share_count += 1;       // Throttle that is releasing into here will still have a session at this point, which will decrement when it releases
+        sendShuttleStatus(SHUTTLE_EVENT_SET, shuttle_id);
     }
 } // set shuttle loco
 

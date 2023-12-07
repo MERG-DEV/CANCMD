@@ -85,6 +85,7 @@
 #define SHUTTLE_EVENT_RESUME    18  // Byte 5 = Speed
 #define SHUTTLE_EVENT_STARTED   19  //
 #define SHUTTLE_EVENT_DECISION  20  // Byte 5 = BOOLEAN
+#define SHUTTLE_EVENT_SET       21  // Loco set into shuttle
 
 
 
@@ -274,6 +275,8 @@ typedef	struct
     ShuttleEntry	shuttletable[MAX_SHUTTLES];  // 4 bytes per shuttle table entry
     AccessoryRoute  accRouteTable[MAX_ROUTES];  // 14 bytes per route
 } ModuleNodeDefs;		
+
+#define SHUTTLE_TABLE_NV    17
 
 typedef union
 {
