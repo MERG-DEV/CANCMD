@@ -57,6 +57,7 @@
 //  Pete Brownlow   27/6/11 Add CAN transmit error checking, beep twice if unable to transmit on CAN
 //                          Output bridge enable turned off during overload
 //  Pete Brownlow   25/2/12 Additional hardware types, re-org for FLiM libraries
+//  Simon West      17/2/24 Added CANCMDB hardware type
 //          For full project revision history see cancmd.c
 
 #define MAJOR_VER 	4         // Major version number - add 100 for WIP
@@ -75,7 +76,9 @@
       #ifndef CANCSB
         #ifndef CANGC3
           #ifndef ANIMATED
-            No hardware defined - set command line switch -D<hardwaretype> in project build options
+            #ifndef CANCMDB
+               No hardware defined - set command line switch -D<hardwaretype> in project build options
+            #endif   
           #endif          
         #endif
       #endif
@@ -102,9 +105,10 @@
 #include "isr_high.h"
 
 
-// Only CANCMD, CANBC and CANCSB fully implemented
+// Only CANCMD, CANBC, CANCSB and CANCMDB fully implemented
 // CANBC is the original MERG BC1a command station/booster fitted with a CANBC CBUS daughter board                    
 // CANCSB is a derivation of CANCMD with additional 3 Amp booster on board                    
+// CANCMDB is very similar to CANCSB but using L298 dual driver for 1.5A booster on board and programming track
 // CANGC3 is the Rocrail version of CANCMD, currently runs standard CANCMD firmware
 // CANKCMD will be port for PIC18F25k80                     
 // The "Animated conrtroller" was going to be a variation by Chuck Hoelzen for his "Animated" system - no news on that recently
@@ -119,6 +123,11 @@
   #define MANU_ID       MANU_MERG
   #define MODULE_ID 	MTYP_CANCSB
   #define MODULE_TYPE   "CANCSB"
+  #define CPUID         P18F2580
+#elif CANCMDB
+  #define MANU_ID       MANU_MERG
+  #define MODULE_ID 	MTYP_CANCMDB
+  #define MODULE_TYPE   "CANCMDB"
   #define CPUID         P18F2580
 #elif CANKCMD
   #define MANU_ID       MANU_MERG
@@ -167,6 +176,10 @@ extern rom unsigned short nodeID;
     #define I_LIMIT_MAIN	768
     #define I_LIMIT_SVC		768
 
+#elif CANCMDB
+
+    #define I_LIMIT_MAIN	768
+    #define I_LIMIT_SVC		768
 
 #elif BC1a
 
@@ -207,6 +220,18 @@ extern rom unsigned short nodeID;
     #define AMPERAGE_REPORTING  .10         // Default time in half seconds between amperage reporting messages - zero is disabled (can be changed in NV)
     #define	SVC_ACK_DIFF		3			// Increase in current for ack puluse to be detected
     #define	SHOOTTHRU_DELAY		0			// Not required in cancmd or cancsb
+
+#elif CANCMDB
+
+    #define	DEFAULT_USER_FLAGS	0b01110110  // Stop on timeout, permit share and steal, map events to DCC accessory commands, send start event
+    #define DEFAULT_OP_FLAGS    0b01000110  // Main output is on board booster, analogue current detect
+    #define DEBUG_FLAGS         0x00        // Which CBUS packets to send with DCC packet data for debugging
+    #define	MAIN_CURRENT_LIMIT	30			// Raw A->D value for main track current limit. Multiply by MAIN_CURRENT_MULT to give the current limit in milliAmps. Default gives approx 1.5 Amps
+    #define	SVC_CURRENT_LIMIT	96          // Raw A->D value for 1A current limit on programming track
+    #define	MAIN_CURRENT_MULT	50			// Multiplier to give milliamps
+    #define AMPERAGE_REPORTING  .10         // Default time in half seconds between amperage reporting messages - zero is disabled (can be changed in NV)
+    #define	SVC_ACK_DIFF		3			// Increase in current for ack puluse to be detected
+    #define	SHOOTTHRU_DELAY		3			// Implemented in CANCMDB - can't be zero, min is 1
 
 #elif BC1a
 
@@ -285,6 +310,25 @@ extern rom unsigned short nodeID;
                                         // RA6-7 not available - used for oscillator
   #define PORTA_DDR	0b11100111	//
   #define PORTA_INIT	0x0
+
+#elif CANCMDB
+  // CANCMDB - same pin usage as CANCSB
+  // Original hardware RB4 is AN9 main track current sense, but on 2480 has to be RA0/AN0
+  // Original hardware RA3 is AN3 programming track current sense but on 2480 has to be RA1/AN1
+  //
+  #define ADCON1_INIT	0b00001101	// Internal Vref, AN0 and AN1 analogue input
+  #define ADCON0_SVC	0b00000101	// RA1 for service track, A/D on
+  #define ADCON0_MAIN	0b00000001	// RA0 for main track, A/D on
+
+  #define OLOAD_DETECTN	1		// No digital overload input on cancsb, so always inactive
+
+  #define SW          	PORTAbits.RA2	// Flim switch
+  #define DCC_EN        PORTAbits.RA3   // Main track DCC enable
+  #define ALARM         PORTAbits.RA5   // Alarm input from booster
+                                        // RA4 pin 6 not used as pin is a capacitor on K series - initialise as an output
+                                        // RA6-7 not available - used for oscillator
+  #define PORTA_DDR	0b11100111	//
+  #define PORTA_INIT	0x0  
 #endif
 
 //
@@ -347,6 +391,25 @@ extern rom unsigned short nodeID;
 
   #define PORTB_INIT	0x00
   #define DCC_PORT	PORTB
+
+#elif CANCMDB                       // Same as CANCSB
+  #define SWAP_OP	0               // Main and service mode outputs fixed, no jumper required
+
+  #define DCC_OUT   PORTBbits.RB0   // DCC signal to booster 
+  #define SHUTDOWN  PORTBbits.RB1   // Active low shutdown output to booster (active high after inverting by MIC4426)  
+  
+  #define DCC_POS	PORTBbits.RB4	// one side of main track H-bridge o/p
+  #define DCC_NEG	PORTBbits.RB5	// other side main track o/p
+
+  #define LED1Y    	PORTBbits.RB6	// Yellow
+  #define LED2G    	PORTBbits.RB7	// Green
+
+  #define PORTB_DDR    0b00001100
+  #define PORTB_DDRTD  0b00001100      // Data direction register when train detector inputs for shuttle are enabled (not port B on CANCSB)
+  #define PORTB_DDRCO  0b00001100      // Data direction register when input for railcom cutout is enabled (not port B on CANCSB)
+
+  #define PORTB_INIT	0x00
+  #define DCC_PORT	PORTB  
 #endif
 
 //
@@ -368,9 +431,9 @@ extern rom unsigned short nodeID;
   #define PORTC_DDR    0b00000000
   #define PORTC_DDRTD  0b11000000      // Data direction register when train detector inputs for shuttle are enabled (feature not tested on BC1a)
   #define PORTC_DDRCO  0b10000000      // Data direction register when input for Railcom cutout is enabled (feature not tested on BC1a)
-
   
   #define PORTC_INIT	0x0
+
 #elif CANCMD
   #define OVERLOAD_PIN 	PORTCbits.RC7	// (pin 18) For scope debug - set bit when overload detected
   #define ISR_PIN       PORTCbits.RC6	// (pin 17) For scope debug - set bit when in high priority ISR
@@ -407,6 +470,26 @@ extern rom unsigned short nodeID;
   #define PORTC_DDRCO   0b00010000      // Data direction register when input for Railcom cutout is enabled
 
   #define PORTC_INIT	0x00100000
+
+#elif CANCMDB                           // Same as CANCSB
+  #define DCC_PKT_PIN	PORTCbits.RC0	// (pin 11) For scope debug - Set during packet send (can sync scope on packet start)
+  #define OVERLOAD_PIN  PORTCbits.RC1	// (pin 12) For scope debug - set bit when overload detected
+  #define ISR_PIN       PORTCbits.RC4   // (pin 15) For debug, set bit when in ISR (cannot be used with ToTi input feature)
+  
+  #define TOTI1         PORTCbits.RC4   // Train detector input for shuttle use (cannot be used with ISR pin debug feature)
+  #define TOTI2         PORTCbits.RC2   // Train detector input for shuttle use
+
+  #define AWD         	LATCbits.LATC3	// Sounder
+
+  #define DCC_SVC_POS	PORTCbits.RC7	// Service track pos DCC drive
+  #define DCC_SVC_NEG	PORTCbits.RC6	// Service track neg DCC drive
+  #define DCC_SVC_EN	PORTCbits.RC5	// Service track output enable
+
+  #define PORTC_DDR     0b00000000      // Default data direction register
+  #define PORTC_DDRTD   0b00010100      // Data direction register when train detector inputs for shuttle are enabled
+  #define PORTC_DDRCO   0b00010000      // Data direction register when input for Railcom cutout is enabled
+
+  #define PORTC_INIT	0x00100000  
 #endif
 
 //

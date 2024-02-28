@@ -3,6 +3,7 @@
 ; 06/04/11 Roger Healey - Turn both LEDs on while bootloading as per other CBUS modules
 ; 20/04/11 Mike Bolton -  Changed CAN bit rate for 8 MHz resonator
 ; 28/03/14 Pete Brownlow -  - preset CAN bit rate before calling application code
+; 19/02/24 Simon West - Added CANCMDB using PIC18F2580 same as CANCSB
 
 ;*************************************************************** * * * * * * * * * * * * * * ;*
 ;*	CBUS bootloader
@@ -84,6 +85,10 @@
 #endif
 
 #ifdef CANCSB
+  #include	P18F2580.INC
+#endif  
+
+#ifdef CANCMDB
   #include	P18F2580.INC
 #endif  
   
