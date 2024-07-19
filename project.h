@@ -58,6 +58,7 @@
 //                          Output bridge enable turned off during overload
 //  Pete Brownlow   25/2/12 Additional hardware types, re-org for FLiM libraries
 //  Simon West      17/2/24 Added CANCMDB hardware type
+//                  09/7/24 Used RA4 on CANCMDB for Railcom cutout drive to separate FETs
 //          For full project revision history see cancmd.c
 
 #define MAJOR_VER 	4         // Major version number - add 100 for WIP
@@ -324,8 +325,8 @@ extern rom unsigned short nodeID;
 
   #define SW          	PORTAbits.RA2	// Flim switch
   #define DCC_EN        PORTAbits.RA3   // Main track DCC enable
+  #define RCUT          PORTAbits.RA4   // Railcom cutout drive to FETs (not available if a K series PIC used)
   #define ALARM         PORTAbits.RA5   // Alarm input from booster
-                                        // RA4 pin 6 not used as pin is a capacitor on K series - initialise as an output
                                         // RA6-7 not available - used for oscillator
   #define PORTA_DDR	0b11100111	//
   #define PORTA_INIT	0x0  

@@ -53,7 +53,8 @@
 //              		  Output bridge enable turned off during overload retry wait and when
 //				  service programming track is turned off
 //      Pete Brownlow   19/11/20 - Ver 4e Beta - add support for Railcom cutout, enabled by NV flag
-//	Simon West	24/02/24 - Added definition CANCMDB adding in shootthru for main track config for use with L298
+//	    Simon West	    24/02/24 - Added definition CANCMDB adding in shootthru for main track config for use with L298
+//                                 and RCUT to have a high signal to drive logic MOSFETs during Railcom cutout.
 
 // The high priority interrupt is triggered by a timer to generate the DCC bit stream and do A to D for current monitoring
 
@@ -595,6 +596,7 @@ void isr_high(void)
            DCC_EN = 1;
            DCC_POS = 0;
            DCC_NEG = 0;
+           RCUT = 1;           //turn on railcom cutout FETs
         //   toggle_dcc_m();   //invert bits so output will be opposite on exit from railcom cutout
         }        
     }    
@@ -609,10 +611,12 @@ void isr_high(void)
             {
                DCC_EN = 1;
                DCC_POS = 0;
-               DCC_NEG = 0; 
+               DCC_NEG = 0;
+               RCUT = 1;           //turn on railcom cutout FETs 
             }
             else // cutout not active
             {    
+                RCUT = 0;          //turn off railcom cutout FETs
                 DCC_EN = 1;
                 if (op_flags.op_bit_m) {
                 DCC_NEG = 0;
@@ -626,6 +630,7 @@ void isr_high(void)
             }         
         } else // main track power off
         {
+            RCUT = 0;           //ensure railcom cutout FETs are off
             DCC_EN = 0;
             DCC_POS = 0;
             DCC_NEG = 0;
