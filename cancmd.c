@@ -139,6 +139,7 @@ BOOL    Doubleflash;                // Control double flashing for FLiM
 BYTE    FlashTime;                  // Number of main loops to hold flash of green LED on
 BYTE	tmr0_reload;                // Reload value for DCC tming
 BYTE    startupTimer;               // heartbeats for startup sequence
+BYTE    startupEventTimer;            // heartbeats for delay in startup event
 
 
 // local function prototypes
@@ -244,11 +245,14 @@ void main(void) {
                     CSStatus.EMStopAllActive = TRUE;
                     CSStatus.busOn = TRUE;
                     send_stat();                             // send command station status message (after additional half sec to ensure cabs had time to reset)
-                    sendStartOfDay( (ModEVPtr) NVPtr );     // If start of day event configured, send it now
                     startShuttles(FALSE);
                     CSStatus.resetDone = FALSE;
                 }    
             }
+            else
+                if (startupEventTimer != 0)
+                    if (--startupEventTimer == 0)
+                        sendStartOfDay( (ModEVPtr) NVPtr );     // If start of day event configured, send it now
 
             if (--FlashInterval == 0 )
             {
@@ -440,8 +444,8 @@ void setup(void) {
     INTCONbits.GIEH = 1;
     INTCONbits.GIEL = 1;
 
-    startupTimer = 5;       // 0.5s heartbeats - 2 secs to track on and send CBUS reset packetes, anohter half second to send stat and start of day
- 
+    startupTimer = 5;                           // 0.5s heartbeats - 2 secs to track on and send CBUS reset packets, another half second to send stat and start of day
+    startupEventTimer = cmdNVptr->sodDelay + 1;   // Extra 0.5s beats before startup event sent (+1 for predecrement during initial test so it is sent once and only once)
 }
 
 
