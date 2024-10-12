@@ -53,6 +53,8 @@
 //              		  Output bridge enable turned off during overload retry wait and when
 //				  service programming track is turned off
 //      Pete Brownlow   19/11/20 - Ver 4e Beta - add support for Railcom cutout, enabled by NV flag
+//	    Simon West	    24/02/24 - Added definition CANCMDB adding in shootthru for main track config for use with L298
+//                                 and RCUT to have a high signal to drive logic MOSFETs during Railcom cutout.
 
 // The high priority interrupt is triggered by a timer to generate the DCC bit stream and do A to D for current monitoring
 
@@ -227,6 +229,14 @@ void setbeep( ModNVPtr NVPtr )
     // from the booster is active whilst booster track power is on
 
     AWD = !NVPtr->userflags.silent && ((main_retry_delay > 0) || op_flags.beeping  || (!ALARM && op_flags.op_pwr_m ));    
+
+#elif CANCMDB
+    // AWD drive signal
+
+    // Beep if silent mode not set,  if either we have a short on the main output, beeps is set by the op flags (error condition), or if the alarm input
+    // from the booster is active whilst booster track power is on
+
+    AWD = !NVPtr->userflags.silent && ((main_retry_delay > 0) || op_flags.beeping  || (!ALARM && op_flags.op_pwr_m ));    
     
 #endif
 }
@@ -248,6 +258,8 @@ BOOL set_output(ModNVPtr NVPtr)
     return( (NVPtr->opflags.j7ctrl && SWAP_OP) || !(NVPtr->opflags.j7ctrl || NVPtr->opflags.mainonboard) );
 #elif CANCSB
     return(SWAP_OP);   // fixed on CANCSB
+#elif CANCMDB
+    return(SWAP_OP);   // same as CANCSB	
 #endif
 }
 
@@ -287,11 +299,16 @@ void isr_high(void)
     else
         railcomFlags.atHalfPeriod = FALSE;
  
-    
-#ifndef CANCSB
+    // The following is for all except CANCSB and CANCMDB (replaces a #ifndef CANCSB)
+#if BC1a
     if (dcc_flags.dcc_test_outputs)
         ISR_PIN = 1;		// flag start of ISR
-#endif    
+    
+#elif CANCMD
+    if (dcc_flags.dcc_test_outputs)
+        ISR_PIN = 1;		// flag start of ISR
+
+#endif
     
     //
     // TMR0 is enabled all the time and we send a continuous preamble
@@ -567,7 +584,88 @@ void isr_high(void)
         }
     }
     
-#endif // CANCSB
+#elif CANCMDB
+    
+	// L298 is dual bridge so there is always a main track output    
+    sthru_count = sthru_delay;
+    
+    if (railcomFlags.atHalfPeriod)
+    {    
+        if (dcc_flags.railcom_cutout_active)
+        {
+           DCC_EN = 1;
+           DCC_POS = 0;
+           DCC_NEG = 0;
+           RCUT = 1;           //turn on railcom cutout FETs
+        //   toggle_dcc_m();   //invert bits so output will be opposite on exit from railcom cutout
+        }        
+    }    
+    else  // not at half period
+    {    //SW added shoothru delay capability
+        if (op_flags.op_pwr_m) 
+        {
+            SHUTDOWN = 1;                   // Enable booster output
+            DCC_OUT = op_flags.op_bit_m;    // Booster output state
+
+            if (dcc_flags.railcom_cutout_active)
+            {
+               DCC_EN = 1;
+               DCC_POS = 0;
+               DCC_NEG = 0;
+               RCUT = 1;           //turn on railcom cutout FETs 
+            }
+            else // cutout not active
+            {    
+                RCUT = 0;          //turn off railcom cutout FETs
+                DCC_EN = 1;
+                if (op_flags.op_bit_m) {
+                DCC_NEG = 0;
+                while (--sthru_count != 0) {}
+                DCC_POS = 1;
+                } else {
+                  DCC_POS = 0;
+                  while (--sthru_count != 0) {}
+                  DCC_NEG = 1;
+                }
+            }         
+        } else // main track power off
+        {
+            RCUT = 0;           //ensure railcom cutout FETs are off
+            DCC_EN = 0;
+            DCC_POS = 0;
+            DCC_NEG = 0;
+            SHUTDOWN = 0;
+        }    
+  
+
+        // L298 second bridge is always service track output
+    
+        if (op_flags.op_pwr_s) {
+            DCC_SVC_EN = 1;
+            if (op_flags.op_bit_s) {
+                DCC_SVC_NEG = 0;
+                DCC_SVC_POS = 1;
+            } else {
+                DCC_SVC_POS = 0;
+                DCC_SVC_NEG = 1;
+            }
+        } else {
+            DCC_SVC_EN = 0;
+            DCC_SVC_POS=0;
+            DCC_SVC_NEG=0;
+        }
+
+        // LED1Y is yellow LED flashes when programming track active
+        // LED2G is green LED (blinks when processing commands)
+
+        if (op_flags.op_pwr_s) {
+            LED1Y = 1;
+        } else {
+            LED1Y = 0;
+        }
+    }
+    
+#endif // CANCMDB
 
     if (!railcomFlags.atHalfPeriod)
     {
@@ -1030,10 +1128,16 @@ void isr_high(void)
     
     ISR_PIN = 0;		// flag end of ISR
     
-#ifndef CANCSB    
+// for all except CANCSB and CANCMDB for debugging (was a #ifndef CANCSB)
+#if BC1a
     if (dcc_flags.dcc_test_outputs)
-        ISR_PIN = 0;   // end of ISR
-#endif    
+        ISR_PIN = 1;		// flag start of ISR
+    
+#elif CANCMD
+    if (dcc_flags.dcc_test_outputs)
+        ISR_PIN = 0;		// end of ISR
+
+#endif
     
 } // isr_high
 
