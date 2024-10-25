@@ -220,20 +220,7 @@ void consist_remove(void);
 void ops_write(dcc_address ops_address, WORD cv_num, BYTE cv_data, BYTE write_mode );
 void dccAccessoryWrite(WORD acc_num, BOOL accOn);
 BOOL dccAccessoryRoute(WORD event_num, BOOL accOn);
-void checkToTiInputs();
-void cbus_event(ecan_rx_buffer * rx_ptr, ModNVPtr cmdNVptr);
-void requestSensorStates( BYTE shuttleNum );
-void reverseShuttleAtSensor( BYTE shuttleIndex, BOOL fwdSensor );
-void processDelayedEvent( DelayListEntry eventEntry, ModNVPtr cmdNVPtr );
-void setShuttlesAuto( void );
-BYTE getShuttleSession( BYTE shuttleIndex );
-void reverseShuttle( BYTE shuttleIndex );
-void doHonk(BYTE session, BYTE honkTypeCount);
-void initShuttles(ModNVPtr cmdNVPtr);
-void startShuttles(BOOL reStart);
-void stopShuttles(void);
-void sendShuttleStatus( BYTE shuttleEvent, BYTE i);
-void setShuttleNVs( BYTE shuttleIndex );
+
 
 #define __PACKET_GEN_H
 #endif

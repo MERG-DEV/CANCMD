@@ -66,7 +66,7 @@
 
 // Definitions for DCC accessory routes
 
-#define MAX_ROUTES 10
+#define MAX_ROUTES 20
 #define ACCS_PER_ROUTE 6
 
 
@@ -150,7 +150,7 @@ typedef	union
         BOOL    directionSet:1;
         BOOL    fwdDirBit:1;
         BOOL    paused:1;
-        BOOL    initialised:1;   // Uninitialised shuttle entries have flag byte set to 0
+        BOOL    initialisedorLockedOut:1;   // Uninitialised shuttle entries have flag byte set to 0 in NV shuttle table. Used to indicate locked out in active shuttle table
     } ;   
     BYTE	byte;
 } ShuttleFlags;
@@ -160,7 +160,7 @@ typedef	struct
     dcc_address     loco_addr;
     BYTE            default_speed;
     ShuttleFlags    flags;
-} ShuttleEntry;
+ } ShuttleEntry;
 
 
 // Data structures for active shuttle table
@@ -272,8 +272,8 @@ typedef	struct
     BYTE		sodDelay;		// Delay before sending start of day event (after initial startup delay)
     BYTE        honkInterval;    // How often honk/whistle sounds in POC shuttle
     BYTE		maxSpeed;         // Maximum speed regardless of commands from cab (kids mode!)
-    ShuttleEntry	shuttletable[MAX_SHUTTLES];  // 4 bytes per shuttle table entry
-    AccessoryRoute  accRouteTable[MAX_ROUTES];  // 14 bytes per route
+    ShuttleEntry	shuttletable[MAX_SHUTTLES];  // 4 bytes per shuttle table entry (from NV17 onwards)  For 15 shuttles that is 60 bytes, to NV77
+    AccessoryRoute  accRouteTable[MAX_ROUTES];  // 14 bytes per route - for 20 routes that is 280 bytes, so NV78 to NV358
 } ModuleNodeDefs;		
 
 #define SHUTTLE_TABLE_NV    17

@@ -373,7 +373,6 @@ void set_shuttle_loco( BYTE session, BYTE shuttle_id )
         activeShuttleTable[ shuttle_id ].flags.valid = TRUE;
         activeShuttleTable[ shuttle_id ].flags.started = TRUE;
         activeShuttleTable[ shuttle_id ].flags.manual = FALSE;
-        activeShuttleTable[ shuttle_id ].flags.initialised = TRUE;
         activeShuttleTable[ shuttle_id ].flags.directionSet = FALSE;
         q_queue[session].status.shuttle = TRUE;
         q_queue[session].status.share_count += 1;       // Throttle that is releasing into here will still have a session at this point, which will decrement when it releases

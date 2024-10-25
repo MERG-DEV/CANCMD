@@ -200,8 +200,12 @@ BOOL parse_FLiM_cmd(void)
 
             case OPC_NVRD:
                 // Read value of a node variable
-                doNvrd(rx_ptr->d3);
+                doNvrd(rx_ptr->d3, FALSE);
                 break;
+                
+            case OPC_NVRDL:
+                doNvrd((rx_ptr->d3 << 8) + rx_ptr->d4, FALSE);
+                break;                    
 
             case OPC_EVULN:
                 // Unlearn event
@@ -213,6 +217,12 @@ BOOL parse_FLiM_cmd(void)
                 doNvset(rx_ptr->d3, rx_ptr->d4);
                 break;
 
+            case OPC_NVSETL:
+                // Set a node variable with 16 bit index
+                doNvset((rx_ptr->d3 << 8) + rx_ptr->d4, rx_ptr->d5);
+                break;
+                
+                
             case OPC_REVAL:
                 // Read event variable by index
                 doReval();
@@ -369,13 +379,24 @@ void doRqevn(void)
 } // doRqevn
 
 // Read a node variable
-void doNvrd(BYTE NVindex)
+void doNvrd(WORD NVindex, BOOL extNV)
 {
-    // Get NV indexr and send response with value of NV
-    Tx1[d0] = OPC_NVANS;
-    Tx1[d3] = NVindex;
-    Tx1[d4] = *NVPtr[--NVindex];
-    sendCbusMsgNN( Node_id );
+    // Get NV index and send response with value of NV
+    
+    if (extNV)  // NV index above 255
+    {
+        Tx1[d0] = OPC_NVANSL; 
+        Tx1[d3] = NVindex >> 8;    
+        Tx1[d4] = NVindex & 0x00FF;  
+        Tx1[d5] = *NVPtr[--NVindex];
+    }    
+    else   
+    {    
+        Tx1[d0] = OPC_NVANS;
+        Tx1[d3] = NVindex;
+        Tx1[d4] = *NVPtr[--NVindex];
+        sendCbusMsgNN( Node_id );
+    }
 } // doNvrd
 
 // Unlearn event
@@ -386,7 +407,7 @@ void doEvuln(void)
 } // doEvuln
 
 // Set a node variable
-void doNvset(BYTE NVindex, BYTE NVvalue)
+void doNvset(WORD NVindex, BYTE NVvalue)
 {
     WORD flashIndex;
 

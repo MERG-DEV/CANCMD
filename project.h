@@ -1,6 +1,7 @@
 #ifndef __PROJECT_H
 #define __PROJECT_H
 
+// Firmware version number and Beta level (if any) are defined here
 /*
  
         Original code up to version 2 (C) 2009 SPROG DCC  http://www.sprog-dcc.co.uk   sprog@sprog-dcc.co.uk
@@ -99,6 +100,7 @@
 #include "program_cmds.h"
 #include "mode_cmds.h"
 #include "packet_gen.h"
+#include "shuttles.h"
 
 
 #include "romops.h"               

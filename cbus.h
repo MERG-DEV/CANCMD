@@ -53,8 +53,17 @@
 
 
 
+
+
 #include "can.h"
 #include "cbusdefs.h"
+
+// Opcode definitions in proof of concept phase - so not yet in CBUSDEFs
+
+#define OPC_NVRDL	0x8F	// Read NV with 16 bit index
+#define OPC_NVANSL	0xBA	// Return NV value with 16 bit index
+#define OPC_NVSETL	0xBB	// Write NV with 16 bit index#define OPC_NVRDL	0x8F	// Read NV with 16 bit index
+
 
 void initCbus(BYTE EEcanID, BYTE EEnodeID);
 void sendCbusOpc(BYTE opc);
