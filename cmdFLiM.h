@@ -66,7 +66,7 @@
 
 // Definitions for DCC accessory routes
 
-#define MAX_ROUTES 20
+#define MAX_ROUTES 2
 #define ACCS_PER_ROUTE 6
 
 

@@ -234,7 +234,7 @@ void cbus_event(ecan_rx_buffer * rx_ptr, ModNVPtr cmdNVPtr)
         
         if (eventNode == SH_LKOUT_NODE)
         {
-            shuttle_index = eventNum + SH_LKOUT_EN;
+            shuttle_index = eventNum - SH_LKOUT_EN;
             setShuttleLockoutState( shuttle_index, opcode);
         }            
 
@@ -246,7 +246,10 @@ void setShuttleLockoutState( BYTE shuttleIndex, BYTE opcode )
 {
     if (activeShuttleTable[shuttleIndex].flags.valid)
     {
-        if (activeShuttleTable[shuttleIndex].flags.initialisedorLockedOut = (opcode == OPC_ACON))
+     
+        activeShuttleTable[shuttleIndex].flags.initialisedorLockedOut = (opcode == OPC_ACON);
+        
+        if (activeShuttleTable[shuttleIndex].flags.initialisedorLockedOut)
             stopShuttle( shuttleIndex );                                     // stop shuttle if locked out
         else
             addDelayedEvent(shuttleIndex, SH_PAUSE_TIME, eaStart,0 );         // restart after a delay if lockout cleared
