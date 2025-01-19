@@ -465,7 +465,7 @@ void initShuttles(ModNVPtr cmdNVPtr)
             activeShuttleTable[i].set_speed =  nodevartable.module_nodevars.shuttletable[i].default_speed;
             activeShuttleTable[i].flags.fwdDirBit = (nodevartable.module_nodevars.shuttletable[i].default_speed & 0x80) == 0;   
             activeShuttleTable[i].flags.directionSet = TRUE;
-            activeShuttleTable[i].flags.initialisedorLockedOut = FALSE;
+            activeShuttleTable[i].flags.initialisedorLockedOut = nodevartable.module_nodevars.shuttletable[i].flags.paused; // Start locked out if paused flag set in definition table
             // Send status event for shuttle found
             // sendShuttleStatus( SHUTTLE_EVENT_INIT, i);
         }
@@ -528,10 +528,13 @@ void startShuttles(BOOL reStart)
                 
                 // Set shuttle going at speed stored in shuttle table    
                   
-                    speed_update(session, activeShuttleTable[ shuttleNum ].set_speed);
-                    sendShuttleStatus( SHUTTLE_EVENT_SPEED, activeShuttleTable[ shuttleNum ].set_speed);
+                    if (!activeShuttleTable[shuttleNum].flags.initialisedorLockedOut)
+                    {    
+                        speed_update(session, activeShuttleTable[ shuttleNum ].set_speed);
+                        sendShuttleStatus( SHUTTLE_EVENT_SPEED, activeShuttleTable[ shuttleNum ].set_speed);
+                    }
                     
-                // Request status of sensors at each end, so if sensor we are heading for is already active, train will immediately reverse and go the right way when the response is received
+                    // Request status of sensors at each end, so if sensor we are heading for is already active, train will immediately reverse and go the right way when the response is received
                     addDelayedEvent(shuttleNum,shuttleNum+3,eaRqSensors,0);
                     // requestSensorStates( shuttleNum );
                 }    

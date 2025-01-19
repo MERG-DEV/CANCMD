@@ -149,7 +149,7 @@ typedef	union
         BOOL    manual:1;
         BOOL    directionSet:1;
         BOOL    fwdDirBit:1;
-        BOOL    paused:1;
+        BOOL    paused:1;                   // When set in the shuttle definition table, that shuttle will start locked out
         BOOL    initialisedorLockedOut:1;   // Uninitialised shuttle entries have flag byte set to 0 in NV shuttle table. Used to indicate locked out in active shuttle table
     } ;   
     BYTE	byte;
