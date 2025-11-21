@@ -45,5 +45,6 @@ cleanup_headers()
 
 mock_headers devincs.h GenericTypeDefs.h
 link_headers FliM.h,FLiM.h ../cbusdefs/cbusdefs.h,.
-gcc -I. accessory_address_translation_test.c && ./a.out | tee accessory_address_translation_test.log
+gcc -ggdb -O0 -I. accessory_address_translation_test.c && ./a.out | tee accessory_address_translation_test.log
+#gcc -ggdb -O0 -I. accessory_address_translation_test.c && ddd ./a.out
 cleanup_headers devincs.h GenericTypeDefs.h FLiM.h cbusdefs.h
