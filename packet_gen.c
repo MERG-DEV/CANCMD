@@ -942,15 +942,15 @@ void dccAccessoryWrite(WORD acc_num, BOOL accOn) {
     if (s_ptr->status.valid == 0) {
         s_ptr->d[5] = 0; // clear error byte
 
-        acc_address.addr_int = acc_num & 0x7FF; // Max accessory address is 12 bit, as LS bit will be our event on/off, we will use up to  11 bits of the accessory number
+        acc_address.addr_int = (acc_num + 4) % 2048; // Max accessory address is 12 bit, as LS bit will be our event on/off, we will use up to  11 bits of the accessory number
 
         // Work out accessory address from event number
         // From NMRA RP9.2.1 D - accessory decoder packet format
         // First  byte is 10AAAAAA where AAAAAA is bits 3 to 8 of the accessory address
-        s_ptr->d[0] = 0x80 + ((((acc_address.addr_lo) >> 2) + 1) & 0x3F) + ((acc_address.addr_hi.byte << 5) & 0x20);
+        s_ptr->d[0] = 0x80 | ((acc_address.addr_lo >> 2) & 0x3F);
         // Second byte is 1AAACDDD where DDD are bits 0 to 2 of the accessory address, C is 'activate' or 'deactivate' and AAA are the inverted bits 9 to 11 of the accessory address
         // For CBUS events, activate is always on, and the LSbit of the DCC address corresponds to accessory on or accessory off
-        s_ptr->d[1] = 0x88 + (~(acc_address.addr_hi.byte << 4) & 0x70) + ((acc_address.addr_lo & 0x03)<<1 );
+        s_ptr->d[1] = 0x88 | (~(acc_address.addr_hi.byte << 4) & 0x70) + ((acc_address.addr_lo << 1) & 0x06);
 
         if (accOn)
             s_ptr->d[1] |= 0x01; // Accessory on bit

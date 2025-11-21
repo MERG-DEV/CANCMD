@@ -121,16 +121,16 @@ main(int, char**)
                                           {2041, ASON,   VALID, 0xBF, 0x8B},
                                           {2043, ASOF,   VALID, 0xBF, 0x8E},
                                           {2043, ASON,   VALID, 0xBF, 0x8F},
-                                          {2044, ASOF,   VALID, 0x81, 0xF8},
-                                          {2044, ASON,   VALID, 0x81, 0xF9},
-                                          {2045, ASOF,   VALID, 0x81, 0xFA},
-                                          {2045, ASON,   VALID, 0x81, 0xFB},
-                                          {2046, ASOF,   VALID, 0x81, 0xFE},
-                                          {2046, ASON,   VALID, 0x81, 0xFF},
-                                          {2047, ASOF,   VALID, 0x82, 0xF8},
-                                          {2047, ASON,   VALID, 0x82, 0xF9},
-                                          {2048, ASOF,   VALID, 0x82, 0xFA},
-                                          {2048, ASON,   VALID, 0x82, 0xFB}};
+                                          {2044, ASOF,   VALID, 0x80, 0xF8},
+                                          {2044, ASON,   VALID, 0x80, 0xF9},
+                                          {2045, ASOF,   VALID, 0x80, 0xFA},
+                                          {2045, ASON,   VALID, 0x80, 0xFB},
+                                          {2046, ASOF,   VALID, 0x80, 0xFC},
+                                          {2046, ASON,   VALID, 0x80, 0xFD},
+                                          {2047, ASOF,   VALID, 0x80, 0xFE},
+                                          {2047, ASON,   VALID, 0x80, 0xFF},
+                                          {2048, ASOF,   VALID, 0x81, 0xF8},
+                                          {2048, ASON,   VALID, 0x81, 0xF9}};
   const size_t number_of_tests = sizeof(test_data)/sizeof(test_data[0]);
 
   dcc_queue_t *s_ptr = NULL;
