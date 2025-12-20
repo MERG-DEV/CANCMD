@@ -79,13 +79,15 @@ typedef struct
     BYTE	evs_per_event;
     BYTE	number_of_nvs;
     BYTE	major_ver;
-    BYTE        module_flags;
-    BYTE        cpu_id;
-    BYTE        bus_type;
-    DWORD       load_address;
-    DWORD       cpumid;
-    BYTE        cpuman;
-    BYTE        beta;
+    BYTE    module_flags;
+    BYTE    cpu_id;
+    BYTE    bus_type;
+    DWORD   load_address;
+    DWORD   cpumid;
+    BYTE    cpuman;
+    BYTE    beta;
+    BYTE    nvnumsb;
+    BYTE    spareprm;
 } ParamVals;
 
 typedef	union
@@ -98,7 +100,7 @@ typedef rom ParamVals       *prmvalptr;
 typedef rom FLiMParameters  *FLiMprmptr;
 
 
-typedef BYTE    SpareParams[4];
+typedef BYTE    SpareParams[2];
 
 typedef struct
 {

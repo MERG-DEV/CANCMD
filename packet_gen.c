@@ -438,7 +438,7 @@ void loco_function(enum funcops dofunc, BYTE session, BYTE funcnum) {
 
         funcvalues = 1;
         
-        if (funcnum > 28)
+        if (funcnum > 28)  // Support for RCN2??, loco functions up to ??
         {
             funcrange = 6;
             funcnum -= 29;
@@ -966,7 +966,15 @@ void dccAccessoryWrite(WORD acc_num, BOOL accOn) {
         // Work out accessory address from event number
         // From NMRA RP9.2.1 D - accessory decoder packet format
         // First  byte is 10AAAAAA where AAAAAA is bits 3 to 8 of the accessory address
-        s_ptr->d[0] = 0x80 + ((((acc_address.addr_lo) >> 2) + 1) & 0x3F) + ((acc_address.addr_hi.byte << 5) & 0x20); 
+        
+        
+        // !!!!!!!!! Fix for problem with DCC accessiry addresses above 252.  This fix has not yet been tested, and needs to be compared with 
+        // the version of the fix by Chris White, as he may have a better fix than this one.
+        // ----------------------------------------------------------------------------------------------------
+//        s_ptr->d[0] = 0x80 + ((((acc_address.addr_lo) >> 2) + 1) & 0x3F) + ((acc_address.addr_hi.byte << 5) & 0x20); 
+        s_ptr->d[0] = 0x80 + ((((acc_address.addr_lo) >> 2) + 1) & 0x3F);
+        
+        // ---------------------------------------------------------------------------------------
         // Second byte is 1AAACDDD where DDD are bits 0 to 2 of the accessory address, C is 'activate' or 'deactivate' and AAA are the inverted bits 9 to 11 of the accessory address
         // For CBUS events, activate is always on, and the LSbit of the DCC address corresponds to accessory on or accessory off
         s_ptr->d[1] = 0x88 + (~(acc_address.addr_hi.byte << 4) & 0x70) + ((acc_address.addr_lo & 0x03)<<1 ); 

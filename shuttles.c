@@ -49,7 +49,7 @@
 #include "project.h"
 //#include "commands.h"
 //#include "packet_gen.h"
-//#include "shuttles.h"
+#include "shuttles.h"
 
 //
 // 7/9/24   Pete Brownlow - Refactored shuttle related code into separate source file 

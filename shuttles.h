@@ -92,10 +92,11 @@
 #define SH_REV_NODE     164             // Node
 #define SH_REV_EN       12              //   and event for reverse end reversing sensor base event number (shuttle 0)
 
+#endif  // not KMRS
+
 #define SH_LKOUT_NODE   165             // Node
 #define SH_LKOUT_EN     12              //   and event for shuttle lockout base eventnumber (shuttle 0)
 
-#endif
 
 #define SH_PAUSE_TIME   60              // Delayed event count for shuttle pause at each end
 #define SH_BUT_NODE     120             // Node for push buttons
@@ -106,10 +107,7 @@
 
 #define TOTI_DEBOUNCE   10              // Counts round main loop for train detector input debounce
 
-#endif
-
-
-#endif
+#endif // not DR shuttle
 
 
 // Shuttle tables are stored in NVs, so data structures are defined in CMDFLiM.h
@@ -132,4 +130,6 @@ void sendShuttleStatus( BYTE shuttleEvent, BYTE i);
 void setShuttleNVs( BYTE shuttleIndex );
 
 #define __SHUTTLES_H
-#endif
+#endif // __SHUTTLES_H
+
+

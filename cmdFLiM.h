@@ -53,7 +53,8 @@
 */ 
 
 
-#define NV_NUM		sizeof(ModuleNodeDefs)  // 16+(4*MAX_SHUTTLES)+ROUTE TABLE 	// Number of node variables
+#define NV_NUM		sizeof(ModuleNodeDefs) & 0xFF  // 16+(4*MAX_SHUTTLES)+ROUTE TABLE 	// Number of node variables lsbyte
+#define NV_NUMSB    ((sizeof(ModuleNodeDefs) & 0xFF00) >> 8)                              // Number of node variables msbyte
 #define MAX_EVT		255                     // Number of events
 #define EVperEVT	sizeof(SHTEvent)        // Event variables per event
 
@@ -66,9 +67,13 @@
 
 // Definitions for DCC accessory routes
 
-#define MAX_ROUTES 2
-#define ACCS_PER_ROUTE 6
-
+#ifdef MORENVSPOC
+    #define MAX_ROUTES 20
+    #define ACCS_PER_ROUTE 8
+#else
+    #define MAX_ROUTES 2
+    #define ACCS_PER_ROUTE 6
+#endif
 
 // Event numbers for transmitted CBUS events
 
@@ -273,7 +278,7 @@ typedef	struct
     BYTE        honkInterval;    // How often honk/whistle sounds in POC shuttle
     BYTE		maxSpeed;         // Maximum speed regardless of commands from cab (kids mode!)
     ShuttleEntry	shuttletable[MAX_SHUTTLES];  // 4 bytes per shuttle table entry (from NV17 onwards)  For 15 shuttles that is 60 bytes, to NV77
-    AccessoryRoute  accRouteTable[MAX_ROUTES];  // 14 bytes per route - for 20 routes that is 280 bytes, so NV78 to NV358
+    AccessoryRoute  accRouteTable[MAX_ROUTES];  // 18 bytes per route - for 20 routes that is 360 bytes, so NV78 to NV438
 } ModuleNodeDefs;		
 
 #define SHUTTLE_TABLE_NV    17

@@ -55,11 +55,11 @@ The node variable and event table storage is declared here
 
 #pragma romdata PARAMETERS
 
-#define PRM_CKSUM MANU_ID+MINOR_VER+MODULE_ID+MAX_EVT+EVperEVT+NV_NUM+MAJOR_VER+MODULE_FLAGS+CPUID+PB_CAN+(LOAD_ADDRESS>>8)+(LOAD_ADDRESS&0xFF)+CPUM_MICROCHIP+BETA+sizeof(ParamVals)+(MNAME_ADDRESS>>8)+(MNAME_ADDRESS&0xFF)
+#define PRM_CKSUM MANU_ID+MINOR_VER+MODULE_ID+MAX_EVT+EVperEVT+NV_NUM+MAJOR_VER+MODULE_FLAGS+CPUID+PB_CAN+(LOAD_ADDRESS>>8)+(LOAD_ADDRESS&0xFF)+CPUM_MICROCHIP+BETA+NV_NUMSB+sizeof(ParamVals)+(MNAME_ADDRESS>>8)+(MNAME_ADDRESS&0xFF)
 
 
-const rom ParamVals     FLiMparams = { MANU_ID, MINOR_VER, MODULE_ID, MAX_EVT, EVperEVT , NV_NUM, MAJOR_VER, MODULE_FLAGS, CPUID,PB_CAN,LOAD_ADDRESS,0,CPUM_MICROCHIP,BETA };
-const rom SpareParams    spareparams = {0,0,0,0};
+const rom ParamVals     FLiMparams = { MANU_ID, MINOR_VER, MODULE_ID, MAX_EVT, EVperEVT , NV_NUM, MAJOR_VER, MODULE_FLAGS, CPUID,PB_CAN,LOAD_ADDRESS,0,CPUM_MICROCHIP,BETA,NV_NUMSB };
+const rom SpareParams   spareparams = {0,0};
 const rom FCUParams     FCUparams   = { sizeof(ParamVals),(DWORD)&module_type,(WORD)PRM_CKSUM };
 const rom char          module_type[] = MODULE_TYPE;
 
