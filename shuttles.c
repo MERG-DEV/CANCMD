@@ -461,9 +461,10 @@ void initShuttles(ModNVPtr cmdNVPtr)
         if (nodevartable.module_nodevars.shuttletable[i].flags.initialisedorLockedOut && nodevartable.module_nodevars.shuttletable[i].flags.valid )
         {    
             activeShuttleTable[i].flags.byte = nodevartable.module_nodevars.shuttletable[i].flags.byte;
-            activeShuttleTable[i].loco_addr =  nodevartable.module_nodevars.shuttletable[i].loco_addr;
+            activeShuttleTable[i].loco_addr.addr_hi.byte =  nodevartable.module_nodevars.shuttletable[i].loco_addr.addr_lo;  // Swap bytes of loco address as they are the other way around
+            activeShuttleTable[i].loco_addr.addr_lo =  nodevartable.module_nodevars.shuttletable[i].loco_addr.addr_hi.byte;  // for compatiblity with CV17/18 and other CBUS DCC address usage
             activeShuttleTable[i].set_speed =  nodevartable.module_nodevars.shuttletable[i].default_speed;
-            activeShuttleTable[i].flags.fwdDirBit = (nodevartable.module_nodevars.shuttletable[i].default_speed & 0x80) == 0;   
+            activeShuttleTable[i].flags.fwdDirBit = (nodevartable.module_nodevars.shuttletable[i].default_speed & 0x80) != 0;   
             activeShuttleTable[i].flags.directionSet = TRUE;
             activeShuttleTable[i].flags.initialisedorLockedOut = nodevartable.module_nodevars.shuttletable[i].flags.paused; // Start locked out if paused flag set in definition table
             // Send status event for shuttle found
@@ -601,8 +602,8 @@ void setShuttleNVs( BYTE shuttleIndex )
     
     NVindx += (shuttleIndex * sizeof(ShuttleEntry));
     
-    doNvset(NVindx++, activeShuttleTable[shuttleIndex].loco_addr.addr_lo);    
-    doNvset(NVindx++, activeShuttleTable[shuttleIndex].loco_addr.addr_hi.byte);
+    doNvset(NVindx++, activeShuttleTable[shuttleIndex].loco_addr.addr_hi.byte);   //High byte of loco address comes first in NVs for compatibility with CV17/18 and other CBUS usage 
+    doNvset(NVindx++, activeShuttleTable[shuttleIndex].loco_addr.addr_lo);
     doNvset(NVindx++, activeShuttleTable[shuttleIndex].set_speed);
     sflags = activeShuttleTable[shuttleIndex].flags;
     sflags.autostart = TRUE;
