@@ -1,5 +1,5 @@
 /*
- 
+
         Original code up to version 2 (C) 2009 SPROG DCC  http://www.sprog-dcc.co.uk   sprog@sprog-dcc.co.uk
         Changes for version 3 (C) 2011 Pete Brownlow      merg@uspys.co.uk
         Support for FLiM, shuttles, DCC accessories and other changes for ver 4 (C) 2011-2017 Pete Brownlow  merg@upsys.co.uk
@@ -41,10 +41,10 @@
           of 4 characters. To see everything lined up correctly, please set your
           IDE or text editor to the same settings.
 ******************************************************************************************************
-	
+
  For version number and revision history see CANCMD.c
- 
-*/ 
+
+*/
 
 //
 // 27/6/11  Pete Brownlow - Heartbeat is now half second, counts adjusted so slot timeout unchanged
@@ -155,7 +155,7 @@ void broadcast_stop(void) {
     dcc_buff_m[2] = 0b01110001;
     dcc_buff_m[6] = 6; // repeat 6 times
     dcc_bytes_m = 3;
-    // hand off buffer	
+    // hand off buffer
     dcc_flags.dcc_rdy_m = 0;
 }
 
@@ -170,7 +170,7 @@ void broadcast_stop(void) {
 // 128 speed step is a 4 or 5 byte packet <Address> <00111111> <speed>
 // <error>
 //
-// <Address> can be 7 bit in a single byte <0aaaaaaa> or 14 bit in two 
+// <Address> can be 7 bit in a single byte <0aaaaaaa> or 14 bit in two
 // bytes <11aaaaaa> <aaaaaaaa>. The first byte of a 14 bit address has
 // a valid range of 0xc0 to 0xe7.
 //
@@ -205,13 +205,13 @@ void packet_gen(ModNVPtr NVPtr) {
 // Attempt to add an entry to the Q queue in response to OPC_RLOC
 //
 // The queue may only have one packet for a given decoder address, which
-// must be greater than 0. If the address is already in use by a cab, or 
-// the queue is full, then an error is returned. 
+// must be greater than 0. If the address is already in use by a cab, or
+// the queue is full, then an error is returned.
 //
 // If the address is in the queue but marked as dispatched, then that
-// session is returned as the handle to the cab, otherwise the queue 
+// session is returned as the handle to the cab, otherwise the queue
 // entry is created and a handle is returned to the cab.
-// 
+//
 // The queue index is the session handle.
 //
 
@@ -252,7 +252,7 @@ void queue_add(WORD addr, enum glocModes requestmode, ModNVPtr cmdNVPtr) {
                     err = 0;
                 }
             }
-        }// if not a valid entry 
+        }// if not a valid entry
         else if (q_queue[i].address.addr_int == addr) {
             // Found same address in valid slot
             err = ERR_LOCO_ADDR_TAKEN;
@@ -421,7 +421,7 @@ void throttle_mode(void) {
 // loco_function()
 //
 // Send a function change to the loco - session and function number passed as paramters
-// 
+//
 
 void loco_function(enum funcops dofunc, BYTE session, BYTE funcnum) {
 
@@ -472,7 +472,7 @@ void loco_function(enum funcops dofunc, BYTE session, BYTE funcnum) {
 
 
 
-// set_funcop applies the function operation (on/off/toggle) to the DCC function byte passed as a pointer. 
+// set_funcop applies the function operation (on/off/toggle) to the DCC function byte passed as a pointer.
 // The modified DCC function byte is returned
 // Note - that means that this is a function with side effects
 
@@ -485,7 +485,7 @@ BYTE set_funcop(BYTE *funcbyte, enum funcops dofunc, BYTE funcvalues) {
             *funcbyte &= funcvalues; // Turn function off
             break;
 
-        case functog: *funcbyte ^= funcvalues; // Toggle function 
+        case functog: *funcbyte ^= funcvalues; // Toggle function
             break;
 
     }
@@ -543,7 +543,7 @@ void function_update(BYTE session, BYTE funcrange, BYTE funcvalues)
 // queue_update()
 //
 // Update speed/dir or function state in response to OPC_DSPD or OPC_DFUNx
-// for handle and add an immediate speed/dir or function update to the S 
+// for handle and add an immediate speed/dir or function update to the S
 // queue.  Set funcrange to zero for a speed change, or the CBUS function mode
 // for a function update
 //
@@ -559,7 +559,7 @@ void queue_update(BYTE session, BYTE funcrange, BYTE funcvalues)
     // Only update for valid slots
     if (q_queue[session].status.valid == 1) {
 
-        // Reset slot timeout 
+        // Reset slot timeout
         keep_alive(session);
 
         speed = q_queue[session].speed;
@@ -607,22 +607,22 @@ void queue_update(BYTE session, BYTE funcrange, BYTE funcvalues)
                 // send function packet
                 switch (funcrange) {
                     case 1:
-                        // Fn0 - 4 
+                        // Fn0 - 4
                         s_ptr->d[i] = 0x80 | (funcvalues & 0x1F);
                         break;
 
                     case 2:
-                        // Fn5 - 8 
+                        // Fn5 - 8
                         s_ptr->d[i] = 0xB0 | (funcvalues & 0x0F);
                         break;
 
                     case 3:
-                        // Fn9 - 12 
+                        // Fn9 - 12
                         s_ptr->d[i] = 0xA0 | (funcvalues & 0x0F);
                         break;
 
                     case 4:
-                        // Fn13 - 20 
+                        // Fn13 - 20
                         s_ptr->d[i] = 0xDE;
                         s_ptr->d[5] = s_ptr->d[5] ^ s_ptr->d[i++];
                         s_ptr->d[i] = funcvalues;
@@ -652,7 +652,7 @@ void queue_update(BYTE session, BYTE funcrange, BYTE funcvalues)
             mode_word.s_full = 1;
         }
     } else {
-        // Slot was invalid   
+        // Slot was invalid
         force_release(session, FALSE);
     }
 } // queue_update
@@ -841,7 +841,7 @@ void dcc_packet(void) {
 //
 // consist_add()
 //
-// Add ops mode programming commands to S queue to put loco in a 
+// Add ops mode programming commands to S queue to put loco in a
 // consist by writing to CV19. Consist address of zero will remove
 // the loco from the consist
 //
@@ -922,41 +922,41 @@ void ops_write(dcc_address ops_address, WORD cv_num, BYTE cv_data, BYTE write_mo
 //
 // Add an accessory DCC packet to the S queue if possible.
 //
-// The 12 bit DCC accessory address is passed to this routine 
-// (Note: any mapping from CBUS event to accessory address is done before calling this routine) 
-// This can also be considered to be a 9 bit accessory address which is the CBUS event divided by 8, 
+// The 12 bit DCC accessory address is passed to this routine
+// (Note: any mapping from CBUS event to accessory address is done before calling this routine)
+// This can also be considered to be a 9 bit accessory address which is the CBUS event divided by 8,
 // with bit zero giving which of a pair to operate, and bits 1 and 2 giving which of 4 pairs of outputs to operate
 // (which way this is viewed depends on the accessory decoder address numbering convention - the actual packet is the same either way))
-// 
+//
 // The packet is repeated twice
 //
 
 void dccAccessoryWrite(WORD acc_num, BOOL accOn) {
 
-    dcc_address acc_address;
+  dcc_address acc_address = {0};
 
-    // get address of next s queue entry 
+    // get address of next s queue entry
     dcc_queue_t * s_ptr = &(s_queue[s_head]);
 
     // Add to next S queue entry if possible
     if (s_ptr->status.valid == 0) {
         s_ptr->d[5] = 0; // clear error byte
 
-        acc_address.addr_int = acc_num & 0x7FF; // Max accessory address is 12 bit, as LS bit will be our event on/off, we will use up to  11 bits of the accessory number
-      
+        acc_address.addr_int = (acc_num + 4) % 2048; // Max accessory address is 12 bit, as LS bit will be our event on/off, we will use up to  11 bits of the accessory number
+
         // Work out accessory address from event number
         // From NMRA RP9.2.1 D - accessory decoder packet format
         // First  byte is 10AAAAAA where AAAAAA is bits 3 to 8 of the accessory address
-        s_ptr->d[0] = 0x80 + ((((acc_address.addr_lo) >> 2) + 1) & 0x3F) + ((acc_address.addr_hi.byte << 5) & 0x20); 
+        s_ptr->d[0] = 0x80 | ((acc_address.addr_lo >> 2) & 0x3F);
         // Second byte is 1AAACDDD where DDD are bits 0 to 2 of the accessory address, C is 'activate' or 'deactivate' and AAA are the inverted bits 9 to 11 of the accessory address
         // For CBUS events, activate is always on, and the LSbit of the DCC address corresponds to accessory on or accessory off
-        s_ptr->d[1] = 0x88 + (~(acc_address.addr_hi.byte << 4) & 0x70) + ((acc_address.addr_lo & 0x03)<<1 ); 
-        
+        s_ptr->d[1] = 0x88 | (~(acc_address.addr_hi.byte << 4) & 0x70) + ((acc_address.addr_lo << 1) & 0x06);
+
         if (accOn)
             s_ptr->d[1] |= 0x01; // Accessory on bit
-             
+
         s_ptr->d[2] = s_ptr->d[0] ^ s_ptr->d[1];
-        
+
         s_ptr->status.byte_count = 3;
         // Repeat count - send it once
         s_ptr->repeat = 1;
@@ -990,7 +990,7 @@ void send_s(CancmdDbugFlags debugflags) {
         s_queue[s_tail].status.valid = 0;
         s_tail = (s_tail + 1) & 0x0f; // wrap at 16
     }
-    // hand off buffer	
+    // hand off buffer
     dcc_flags.dcc_rdy_m = 0;
 
 
@@ -1003,7 +1003,7 @@ void send_s(CancmdDbugFlags debugflags) {
 
 // Many decoders will not send their Railcom data in the cutout when only idle packets are being transmitted. If no locos are in the stack, and Railcom is enabled, use a speed 0 to loco short address 127 as a pseudo idle message.
 
-void sendPseudoIdle(void) 
+void sendPseudoIdle(void)
 
 {
     unsigned char i = 0;
@@ -1013,7 +1013,7 @@ void sendPseudoIdle(void)
 
     // Add immediate packet to S with zero speed for short address 127
 
-    if (s_ptr->status.valid == 0) 
+    if (s_ptr->status.valid == 0)
     {
         s_ptr->d[5] = 0; // clear error detection byte
         // Put short address in
@@ -1021,7 +1021,7 @@ void sendPseudoIdle(void)
         s_ptr->d[5] = s_ptr->d[i++];
         s_ptr->d[i] = 0x3F; // 128 step mode
         s_ptr->d[5] = s_ptr->d[5] ^ s_ptr->d[i++];
-        s_ptr->d[i] = 0; // Zero speed 
+        s_ptr->d[i] = 0; // Zero speed
         s_ptr->d[5] = s_ptr->d[5] ^ s_ptr->d[i++];
         s_ptr->d[i++] = s_ptr->d[5];
         s_ptr->status.byte_count = i;
@@ -1123,7 +1123,7 @@ void send_q(CancmdDbugFlags debugflags, BOOL railcomEnabled) {
     // Find next valid slot
     i = MAX_HANDLES;
     foundLoco = FALSE;
-    
+
     while (i > 0) {
         q_idx++;
         if (q_idx >= MAX_HANDLES) {
@@ -1148,8 +1148,8 @@ void send_q(CancmdDbugFlags debugflags, BOOL railcomEnabled) {
 
     if ((foundLoco == FALSE) && railcomEnabled)
         sendPseudoIdle();
-        
-        
+
+
     // Find next valid slot
     //	q_idx++;
     //    i = MAX_HANDLES;
@@ -1183,7 +1183,7 @@ void send_q(CancmdDbugFlags debugflags, BOOL railcomEnabled) {
 }
 
 void send_idle(void) {
-    
+
     // send an idle packet
     dcc_buff_m[0] = 0xff;
     dcc_buff_m[1] = 0;
@@ -1208,10 +1208,10 @@ void checkToTiInputs()
     if (cmdNVptr->opflags.enableTotiInputs)
         for (i=0;i<2;i++)
         {
-            totiActive = !(i == 0 ? TOTI1 : TOTI2 ); // Get train detector input (active low)         
-            
+            totiActive = !(i == 0 ? TOTI1 : TOTI2 ); // Get train detector input (active low)
+
             if (totiActive)
-            {    
+            {
                 if (Totis[i].activeDebounceCount > 0)
                 {
                     if (--Totis[i].activeDebounceCount == 0)
@@ -1222,8 +1222,8 @@ void checkToTiInputs()
             }
             else
                 Totis[i].activeDebounceCount = 0;
-                  
-        }    
+
+        }
 }
 
 // CBUS events for shuttle actions and DCC accessory operations
@@ -1236,21 +1236,21 @@ void cbus_event(ecan_rx_buffer * rx_ptr, ModNVPtr cmdNVPtr)
 
     eventNode  = rx_ptr->d1;
     eventNode <<= 8;
-    eventNode += rx_ptr->d2;    
-    
+    eventNode += rx_ptr->d2;
+
    //  eventNode = (rx_ptr->d1 << 8) + rx_ptr->d2;
-    
+
     eventNum  = rx_ptr->d3;
     eventNum <<= 8;
     eventNum += rx_ptr->d4;
-    
+
     // eventNum  = (rx_ptr->d3 << 8) + rx_ptr->d4;  // gets wrong answer compared to 3 lines above - probably issue with promoting byte operand to word
-   
+
     // Mapped CBUS event to DCC accessory - note that CBUS events count from 1 whilst DCC accessory addresses count from zero, so use CBUS event - 1
 
     if (cmdNVPtr->userflags.mapdccacc) { // if Map CBUS event to DCC accessory command turned on
         if (((rx_ptr->d0 == OPC_ASON) || (rx_ptr->d0 == OPC_ASOF)) && (cmdNVPtr->mappednode == 0) // Short event
-        ||  ((rx_ptr->d0 == OPC_ACON) || (rx_ptr->d0 == OPC_ACOF)) && (cmdNVPtr->mappednode == eventNode)) // Long event     
+        ||  ((rx_ptr->d0 == OPC_ACON) || (rx_ptr->d0 == OPC_ACOF)) && (cmdNVPtr->mappednode == eventNode)) // Long event
         {
             // Send a DCC accessory packet corresponding to the CBUS event received
             dccAccessoryWrite(eventNum-1, (rx_ptr->d0 == OPC_ACON) || (rx_ptr->d0 == OPC_ASON));
@@ -1258,27 +1258,27 @@ void cbus_event(ecan_rx_buffer * rx_ptr, ModNVPtr cmdNVPtr)
     }
 
    // CS Management events
-    
+
     if ((eventNode == HC_CS_NODE) && (eventNum == HC_STOP_ALL) && (rx_ptr->d0 == OPC_ACON))
     {
         stopAll();
-    }    
+    }
 
-    
-   // Proof of concept shuttle 
 
-    if ((eventNode == SH_POC_EN_NODE) && (eventNum == SH_POC_ENABLE_EN)) 
+   // Proof of concept shuttle
+
+    if ((eventNode == SH_POC_EN_NODE) && (eventNum == SH_POC_ENABLE_EN))
     {
         sh_poc_enabled = (cmdNVPtr->userflags.shuttles && (rx_ptr->d0 == OPC_ACON)); // Check if shuttles enabled (by switch and NV flag)
         setShuttlesAuto();
     }
 
-    if (sh_poc_enabled) 
+    if (sh_poc_enabled)
     {
-        switch (eventNode) 
+        switch (eventNode)
         {
             case SH_BUT_NODE:
-                if ((eventNum == SH_HONK_EN) && (rx_ptr->d0 == OPC_ACON)) 
+                if ((eventNum == SH_HONK_EN) && (rx_ptr->d0 == OPC_ACON))
                 {
                     if ((session = getShuttleSession(0)) != 0xFF) {
                         if ((honkTypeCount > 4) || (honkTypeCount < 3))
@@ -1289,12 +1289,12 @@ void cbus_event(ecan_rx_buffer * rx_ptr, ModNVPtr cmdNVPtr)
                     }
                 }
 
-                if ((session = getShuttleSession(shuttle_index = eventNum - SH_BUT_EN)) != 0xFF) 
+                if ((session = getShuttleSession(shuttle_index = eventNum - SH_BUT_EN)) != 0xFF)
                 {
-                    if (rx_ptr->d0 == OPC_ACON) 
+                    if (rx_ptr->d0 == OPC_ACON)
                     {
                         activeShuttleTable[ shuttle_index ].flags.manual = TRUE;
-                        if ((q_queue[session].speed & 0x7F) == 0) 
+                        if ((q_queue[session].speed & 0x7F) == 0)
                         {
                             speed_update(session, activeShuttleTable[ shuttle_index ].set_speed);
 
@@ -1317,13 +1317,13 @@ void cbus_event(ecan_rx_buffer * rx_ptr, ModNVPtr cmdNVPtr)
                 break;
 
             case SH_FWD_NODE:
-                if (rx_ptr->d0 == OPC_ACON) 
+                if (rx_ptr->d0 == OPC_ACON)
                     reverseShuttleAtSensor( (eventNum - SH_FWD_EN), TRUE );
                 break;
 
             case SH_REV_NODE:
-                if (rx_ptr->d0 == OPC_ACON) 
-                    reverseShuttleAtSensor( (eventNum - SH_REV_EN), FALSE );  
+                if (rx_ptr->d0 == OPC_ACON)
+                    reverseShuttleAtSensor( (eventNum - SH_REV_EN), FALSE );
                 break;
 
             default:
@@ -1336,15 +1336,15 @@ void cbus_event(ecan_rx_buffer * rx_ptr, ModNVPtr cmdNVPtr)
 void reverseShuttleAtSensor( BYTE shuttleIndex, BOOL fwdSensor )
 
 {
-    
+
     BYTE        session;
     DCCSpeed    setSpeed;
-    
-    if ((session = getShuttleSession(shuttleIndex)) != 0xFF) 
+
+    if ((session = getShuttleSession(shuttleIndex)) != 0xFF)
     {
         setSpeed.velocity = activeShuttleTable[shuttleIndex].set_speed;
 
-        if (activeShuttleTable[shuttleIndex].flags.directionSet) 
+        if (activeShuttleTable[shuttleIndex].flags.directionSet)
         {
             if ((activeShuttleTable[shuttleIndex].flags.fwdDirBit && fwdSensor) == setSpeed.direction)
                 reverseShuttle(shuttleIndex);
@@ -1357,7 +1357,7 @@ void reverseShuttleAtSensor( BYTE shuttleIndex, BOOL fwdSensor )
     }
 }
 
-// For POC, the delayed event is always form turning off honk/whistle 
+// For POC, the delayed event is always form turning off honk/whistle
 
 void processDelayedEvent(DelayListEntry eventEntry, ModNVPtr cmdNVPtr)
  {
@@ -1365,7 +1365,7 @@ void processDelayedEvent(DelayListEntry eventEntry, ModNVPtr cmdNVPtr)
     int i;
 
     eventIndex = eventEntry.delayedEventIndex;
-    
+
     switch (eventEntry.action)
     {
         case eaHonk:
@@ -1380,22 +1380,22 @@ void processDelayedEvent(DelayListEntry eventEntry, ModNVPtr cmdNVPtr)
                     doHonk(session, honkTypeCount++);
                     activeShuttleTable[eventIndex].counter = cmdNVPtr->honkInterval;
 
-                }        
+                }
             }
             break;
-            
+
         case eaHonkEnd:
             if ((session = getShuttleSession(eventIndex)) != 0xFF)
                 loco_function(funcoff, session, eventEntry.param); // end honk/whistle
             break;
-        
+
 
         case eaStart:
             if ((session = getShuttleSession(eventIndex)) != 0xFF)
                 speed_update(session, activeShuttleTable[ eventIndex ].set_speed); // set speed to stored value
             break;
     } // switch
-    
+
 }
 
 void setShuttlesAuto(void)
@@ -1456,7 +1456,7 @@ void initShuttles(void)
 
 {
     int i;
-    
+
  	// Initialise active shuttle table
 
 	for (i=0; i<MAX_HANDLES; i++)
@@ -1470,14 +1470,14 @@ void initShuttles(void)
     {
         delayedEvents[i].delayCount = 0;
         delayedEvents[i].delayedEventIndex = 0xFF;
-    }   
-    
+    }
+
     // Initialise TOTI management
-    
+
     for (i=0;i<2;i++)
     {
         Totis[i].activeDebounceCount = 0;
         Totis[i].inactiveDebounceCount = 0;
-    }    
-    
+    }
+
 }
