@@ -267,10 +267,10 @@ BOOL parse_FLiM_cmd(void)
 				doRqnp();
 				break;
 
-                        case OPC_RQMN:
-                                // Read module type name
-                                doRqmn();
-                                break;
+            case OPC_RQMN:
+                    // Read module type name
+                    doRqmn();
+                    break;
 
 			case OPC_SNN:
 				// Set node number

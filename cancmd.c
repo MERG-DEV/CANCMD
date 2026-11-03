@@ -93,6 +93,7 @@
 // 18/11/18     4eBeta1 Pete Brownlow   Add support for digital inputs from train detectors for shuttle
 // 20/5/19      4eBeta2 Pete Brownlow   Add support for Railcom cutout during preamble
 // 19/11/20     4eBeta3 Pete Brownlow   Complete debug and test of Railcom cutout support
+//  From this version onwards, see the release notes file for details of changes and the GitHub repository for the code changes
 
 // Definition of the version number is in project.h
 
